@@ -1,0 +1,28 @@
+21:48:35.572 INFO  Makertron Starting Version: 5.0.1 
+21:48:35.616 INFO  Server listening on port: 3000 
+21:48:35.617 INFO  Client being served on port: 8080 
+21:49:19.827 INFO  Makertron Starting Version: 5.0.1 
+21:49:19.890 INFO  Server listening on port: 3000 
+21:49:19.890 INFO  Client being served on port: 8080 
+21:49:24.743 INFO  {"0":["cylinder",200,1,20,20]} 
+21:49:24.948 INFO  {"0":["cylinder",200,1,15,15]} 
+21:49:24.949 INFO  {"0":["cylinder",20,1,60,60]} 
+21:49:24.950 INFO  {"0":["cylinder",20,1,15,15]} 
+21:49:24.953 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.953 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.953 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.956 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.956 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.964 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.965 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:24.965 INFO  {"0":["cylinder",20,1,60,60]} 
+21:49:24.965 INFO  {"0":["cylinder",20,1,15,15]} 
+21:49:24.974 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.011 INFO  {"0":["cylinder",25,1,18.5,18.5]} 
+21:49:25.025 INFO  {"0":["cube",50,50,50,true]} 
+21:49:25.025 INFO  {"0":["sphere",25,null]} 

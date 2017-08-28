@@ -1,0 +1,48 @@
+{
+  "name": "makertron_server",
+  "version": "5.0.0",
+  "description": "Maketron Server Docker",
+  "author": "Damien Towning",
+  "main": "makertron_server.js",
+  "scripts": {
+    "start": "node makertron_server.js"
+  },
+  "dependencies": {
+		"file-system" : "^*",
+		"lodash" : "^*",
+		"ref" : "^*",
+		"ref-array" : "^*",
+		"ref-struct" : "^*",
+		"tiny-worker": "^*",
+		"cradle": "^*",
+    "express": "^*",
+		"jquery": "^*",
+	   "ffi": "^*",
+    "fs": "^*",
+    "https": "^*",
+    "net": "^*",
+    "request": "^*",
+    "socket.io": "^*",
+		"simple-node-logger":"^*",
+		"debug":"^*",
+		"heartbeats":"^*",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.4.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "css-loader": "^*",
+    "react": "^*",
+    "react-ace": "^*",
+    "react-codemirror": "^*",
+    "react-color": "^*",
+    "react-dom": "^15.3.2",
+    "react-mdl": "^*",
+    "react-split-pane": "^*",
+    "style-loader": "^*",
+    "webpack": "^2.6.1",
+    "webpack-dev-server": "^2.1.0-beta.8"
+  }
+
+
+
+}
