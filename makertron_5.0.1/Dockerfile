@@ -19,6 +19,7 @@ RUN npm update
 COPY . /usr/src/app
 
 # Build brep.so shared library. Note that we bundle a big chunk of OpenCascade here because 7.x is not available as a package yet. 
+#RUN apt-get -y install libcgal-dev 
 RUN apt-get -y install libeigen3-dev
 RUN apt-get -y install libboost-all-dev
 RUN cd /usr/src/app/brep_shared_library
@@ -26,8 +27,7 @@ RUN make
 RUN cp brep.so /usr/src/app/. 
 RUN cd /usr/src/app
 
-# Install CGAL libraries 
-#RUN apt-get -y install libcgal-dev 
+
 
 #RUN export DEBUG=*	
 #EXPOSE 3000
