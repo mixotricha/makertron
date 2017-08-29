@@ -24,6 +24,7 @@ RUN apt-get -y install libeigen3-dev
 RUN apt-get -y install libboost-all-dev
 WORKDIR /usr/src/app/brep_shared_lib
 RUN make 
+RUN cp oce/lib/* /usr/lib
 WORKDIR /usr/src/app
 
 #RUN export DEBUG=*	
