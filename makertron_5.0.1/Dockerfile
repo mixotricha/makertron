@@ -8,6 +8,7 @@ WORKDIR /usr/src/app
 run apt-get --fix-missing update
 RUN apt-get -y install nodejs
 RUN apt-get -y install npm 
+RUN apt-get -y git
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
 # Install app dependencies
@@ -17,13 +18,13 @@ RUN npm update
 # Bundle app source
 COPY . /usr/src/app
 
-# Build Open Cascade ... why doesn't it have a package .. where the heck is the package ?!?! 
-
-#COPY brep.so /usr/src/app
-
-# Install Opencascade libaries 
-#RUN mkdir -p /home/mixotricha/workspace/opencascade-7.1.0/lin64/gcc/lib/
-#RUN mv lib/* /home/mixotricha/workspace/opencascade-7.1.0/lin64/gcc/lib/
+# Build brep.so shared library. Note that we bundle a big chunk of OpenCascade here because 7.x is not available as a package yet. 
+RUN apt-get -y install libeigen3-dev
+RUN apt-get -y install libboost-all-dev
+RUN cd /usr/src/app/brep_shared_library
+RUN make 
+RUN cp brep.so /usr/src/app/. 
+RUN cd /usr/src/app
 
 # Install CGAL libraries 
 #RUN apt-get -y install libcgal-dev 
