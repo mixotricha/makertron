@@ -17,6 +17,7 @@ COPY package.json /usr/src/app/package.json
 RUN npm update
 # Bundle app source
 COPY . /usr/src/app
+RUN ./build_webpack.sh
 
 # Build brep.so shared library. Note that we bundle a big chunk of OpenCascade here because 7.x is not available as a package yet. 
 RUN apt-get -y install libcgal-dev 
