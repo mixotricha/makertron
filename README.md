@@ -55,7 +55,7 @@ The following instructions assume docker is installed.
 2. cd maketron 
 3. edit config.js to set appropriate ports. 
 
-	VERSION        = "5.0.1"
+	VERSION        = "5.0.1"  
 	CLIENT_ADDRESS = "localhost"  
 	CLIENT_PORT    = "80"   
 	SERVER_ADDRESS = "http://localhost"  
