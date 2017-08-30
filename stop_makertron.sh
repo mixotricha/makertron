@@ -1,1 +1,1 @@
-sudo docker rm -f makertron
+sudo docker stop makertron
