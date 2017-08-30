@@ -74,7 +74,7 @@
 		onRegisterClick(event) {}
 		componentWillMount() {}
 		about() {
-			var url = 'https://github.com/mixotricha/makertron_client' 
+			var url = 'https://github.com/mixotricha/makertron' 
 			 window.open(url);
 		}
 		render() {
