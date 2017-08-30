@@ -52,7 +52,7 @@ The following instructions assume docker is installed.
 
 <h3>To install the Combined Server/Client</h3> 
 
-Edit following files and change port settings as approriate. You will need a port for both the client and server.
+Edit following files and change port settings as approriate. You will need a port for both the client and server. The defauls are port 80 for the client and port 3000 for the server. 
 
 makertron/DockerFile 
 
