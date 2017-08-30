@@ -11,25 +11,28 @@ RUN apt-get -y install npm
 RUN apt-get -y install git
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
-# Install app dependencies
+# Install app npm deps
 COPY package.json /usr/src/app/package.json
 #RUN npm install
 RUN npm update
-# Bundle app source
+RUN npm install --global webpack 
 COPY . /usr/src/app
 RUN ./build_webpack.sh
 
-# Build brep.so shared library. Note that we bundle a big chunk of OpenCascade here because 7.x is not available as a package yet. 
+ # Install CGAL and OCE. Note that we bundle a big chunk of OpenCascade here because 7.x is not available as a package yet 
 RUN apt-get -y install libcgal-dev 
 RUN apt-get -y install libeigen3-dev
 RUN apt-get -y install libboost-all-dev
+
+# Build brep.so shared library
 WORKDIR /usr/src/app/brep_shared_lib
 RUN make 
+RUN cp brep.so ../. 
 RUN cp oce/lib/* /usr/lib
 WORKDIR /usr/src/app
 
 #RUN export DEBUG=*	
-#EXPOSE 3000
-#EXPOSE 80 
+EXPOSE 3000
+EXPOSE 80
 
 CMD [ "npm", "start" ]
