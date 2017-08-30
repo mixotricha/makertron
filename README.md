@@ -53,11 +53,11 @@ The following instructions assume docker is installed.
 
 Edit following files and change port settings as approriate. You will need a port for both the client and server
 
-<a href="https://github.com/mixotricha/makertron/DockerFile">DockerFile</a> 
+<a href="https://github.com/mixotricha/makertron/blob/master/DockerFile">DockerFile</a> 
 
-<a href="https://github.com/mixotricha/makertronc/config.js">config.js</a> 
+<a href="https://github.com/mixotricha/makertronc/blob/master/config.js">config.js</a> 
 
-<a href="https://github.com/mixotricha/makertron/start_makertron.sh">start_makertron.sh</a>
+<a href="https://github.com/mixotricha/makertron/blob/master/start_makertron.sh">start_makertron.sh</a>
  
 
 1. git clone https://github.com/mixotricha/makertron
