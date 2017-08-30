@@ -26,11 +26,6 @@
 	// ===============================================================
 
 	'use strict'
-
-	import config from '../js/config.js'
-
-	//sessionStorage.server_address  = config.CONFIG_DATA.SERVER_ADDRESS + ":" + config.CONFIG_DATA.PORT
-	//sessionStorage.root_doc = config.CONFIG_DATA.SERVER_PATH
 	
 	import React from 'react'
 	import ReactDOM from 'react-dom'	
