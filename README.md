@@ -65,7 +65,7 @@ makertron/start_makertron.sh
 2. cd makertron 
 3. ./build_makertron.sh
 4. ./start_makertron.sh
-4. Fire up web browser and go to localhost:xxxxx. 
+4. browser go to localhost:xxxxx 
 5. ./stop_makertron.sh
 
 
