@@ -62,7 +62,7 @@ makertron/start_makertron.sh
 
 
 1. git clone https://github.com/mixotricha/makertron
-2. cd maketron 
+2. cd makertron 
 3. ./build_makertron.sh
 4. ./start_makertron.sh
 4. Fire up web browser and go to localhost:xxxxx. 
