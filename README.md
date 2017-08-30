@@ -1,10 +1,12 @@
 
 <h1>General Over View</h1>
 
-The Makertron is a constructive solids engine that aims to fill the gap between traditional 'UI' driven cad tools and specification driven manufacturing environments. It features a decoupled philosophy where the constructive geometry server and the client server are independent projects 
-and run in independent Docker containers. 
+The Makertron is a constructive solids engine that aims to fill the gap between traditional 'UI' driven cad tools and specification driven manufacturing environments. 
 
-The constructive geometry server deals in stacks of geometrical operations and the client server deals with the complex business of parsing and managing user interaction. 
+
+It features a decoupled philosophy. Everything now exists in a single docker container but you can select if you want the client or the server or both to run in the same container. This opens the door to having multiple servers in a cluster working on CSG geometry at the same time. 
+
+The constructive geometry server portion of the makertron deals in stacks of geometrical operations and the client server deals with the complex business of parsing and managing user interaction. 
 
 This is in sharp contrast to the OpenSCAD project design where the interface and geometry engine are tightly coupled and issues of speed and scale are readily apparent and non trivial to solve. The Makertron aims to be OpenSCAD compatible while fixing some ambiguities in the OpenSCAD language itself and shifting the parsing of the language to what we deem to be a more 'solid' parsing core through the addition of a transpiler. This will result in better error checking and more flexibility in the language without significant parser development overhead. 
 
@@ -39,6 +41,30 @@ function       | y         | unstable | Still testing
 <h2>Demonstration</h2>
 
 <a href="http://makertron.io">makertron.io</a>
+
+<h2>How Do I Build It Stand Alone</h2>
+
+All of the core components are currently in a Docker image. 
+
+The following instructions assume docker is installed. 
+
+
+<h3>To install the server / client</h3> 
+
+1. git clone https://github.com/mixotricha/makertron
+2. cd maketron 
+3. edit config.js to set appropriate ports. 
+
+	VERSION        = "5.0.1"
+	CLIENT_ADDRESS = "localhost"  
+	CLIENT_PORT    = "80"   
+	SERVER_ADDRESS = "http://localhost"  
+	SERVER_PATH    = "localhost/"  
+	SERVER_PORT    = "3000" 
+
+3. ./build_makertron.sh
+4. Fire up web browser and go to localhost:xxxxx. 
+
 
 <h2>Motivation</h2>
 The Makertron has been developed because we simply have not been able to find a solids platform for constructive geometry generation that has a server side component and a client component and we realise that others are also in the same boat as ourselves. 
@@ -96,43 +122,6 @@ We have things in the real world we actually want to build. The computational ge
 The design goal is that with the Makertron client and server code you can develop complex constructive geometry at ‘scale’ and at ‘speed’ in a formal language. This is a step towards specification driven cad design. Because of the nature of this design multi core processing and parallelisation becomes possible. 
 
 As Makertron develops it will gain the ability to manage complex assembly and production tasks from the start of the design pipe line all the way through to manufacturing. This will include quality operations on geometry. Easy connectivity with the Internet of things. All of the features that we should expect from any performant web aware modular 'modern' language. 
-
-<h2>How Do I Build It?</h2>
-
-All of the core components are currently in Docker images. This greatly eases the deyployment of the project and means freedom from worrying about dependencies. The client is also configured for webpack so you can run it stand alone for development/testing but you will need to install the appropriate npms and support libraries. The same also applies to the server container. 
-
-The following instructions assume you know what Docker is. How to configure it and so on. 
-
-This should give you a running server and client :
-
-# To install the client 
-
-1. git clone https://github.com/mixotricha/makertron_client/tree/master/makertron_5.0.0 
-2. cd xxx/makertron_5.0.0/scripts 
-3. 
-	1. <editor> config.js
-	2. Change "SERVER_ADDRESS" : "http://makertron.io" to point to your target server 
-	3. Change "SERVER_PATH":"makertron.io/" to point to your target server + "/"
-	4. change "PORT" : "3000" to point to the port on your target server. 
-5. sudo docker build -t client . 
-6. sudo docker run -d --name client -p 80:80 client 
-
-	*If you wish to just test the client you can skip step 3 above and skip installing the server below*
-
-# To install the server 
-
-1. git clone https://github.com/mixotricha/makertron_client/tree/master/makertron_server
-2. cd xxx/makertron_server_5.0.0 
-3. sudo docker build -t server . 
-4. sudo docker run -d --name server -p 3000:3000 server 
-
-With both Docker client and server instances up and the config of the client set correctly you should now be able to access the server with the client. 
-
-# Building the BREP binary 
-
-More to come on this. Still writing the documentation for it. At the moment only the core libraries and the brep.so are in the build. 
-
-Source tree is here : <a href="https://github.com/mixotricha/brep_shared_library">brep_shared_library</a>
 
 <h2>License</h2>
  Makertron is Free Software released under the <a href="http://www.gnu.org/licenses/gpl-2.0.html">General Public License version 2</a>. 
