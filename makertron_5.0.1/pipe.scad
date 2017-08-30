@@ -43,7 +43,7 @@ test( pipe_od = 20,
     holes = 6); 
 
 minkowski() { 
-	cube(size=50,center=true); 
-	sphere(r=25); 
+ cube(size=50/2,center=true); 
+ sphere(r=25/2); 
+ cylinder(r1=30/2,r2=5/2,h=100/2); 
 }
-    
