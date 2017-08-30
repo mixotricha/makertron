@@ -51,19 +51,19 @@ The following instructions assume docker is installed.
 
 <h3>To install the server / client</h3> 
 
+*** change port settings as approriate. You will need a port for both the client and server
+
+				<a href="DockerFile">DockerFile</a> 
+				<a href="config.js">config.js</a> 
+				<a href="start_makertron.sh">start_makertron.sh</a> ***
+
 1. git clone https://github.com/mixotricha/makertron
 2. cd maketron 
-3. edit config.js to set appropriate ports. 
-
-	VERSION        = "5.0.1"  
-	CLIENT_ADDRESS = "localhost"  
-	CLIENT_PORT    = "80"   
-	SERVER_ADDRESS = "http://localhost"  
-	SERVER_PATH    = "localhost/"  
-	SERVER_PORT    = "3000" 
-
 3. ./build_makertron.sh
+4. ./start_makertron.sh
 4. Fire up web browser and go to localhost:xxxxx. 
+5. ./stop_makertron.sh
+
 
 
 <h2>Motivation</h2>
