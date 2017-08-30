@@ -51,11 +51,11 @@ The following instructions assume docker is installed.
 
 <h3>To install the server / client</h3> 
 
-*** change port settings as approriate. You will need a port for both the client and server
+change port settings as approriate. You will need a port for both the client and server
 
 				<a href="DockerFile">DockerFile</a> 
 				<a href="config.js">config.js</a> 
-				<a href="start_makertron.sh">start_makertron.sh</a> ***
+				<a href="start_makertron.sh">start_makertron.sh</a> 
 
 1. git clone https://github.com/mixotricha/makertron
 2. cd maketron 
