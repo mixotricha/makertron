@@ -48,8 +48,9 @@ All of the core components are currently in a Docker image.
 
 The following instructions assume docker is installed. 
 
+<a href="https://docs.docker.com/engine/installation/">Install Docker</a>
 
-<h3>To install the server / client</h3> 
+<h3>To install the Combined Server/Client</h3> 
 
 Edit following files and change port settings as approriate. You will need a port for both the client and server.
 
