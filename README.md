@@ -66,7 +66,8 @@ makertron/start_makertron.sh
 3. ./build_makertron.sh
 4. ./start_makertron.sh
 4. browser go to localhost:xxxxx 
-5. ./stop_makertron.sh
+
+5. ./stop_makertron.sh to stop the makertron 
 
 
 
