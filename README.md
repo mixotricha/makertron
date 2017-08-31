@@ -16,13 +16,15 @@ This is in sharp contrast to the OpenSCAD project design where the interface and
 
 <h2>How Do I Build It Stand Alone</h2>
 
-All of the core components are currently in a Docker image. 
+All of the core components are currently in a Docker image and docker will be required for its execution. 
 
-The following instructions assume docker is installed. 
+For Windows Seven <a href="https://docs.docker.com/toolbox/toolbox_install_windows/">Install Docker W7 ( long involved VM mess ) 
 
-<a href="https://docs.docker.com/engine/installation/">Install Docker</a>
+For All Others <a href="https://docs.docker.com/engine/installation/">Install Docker For Others</a>
 
 <h3>To install the Combined Server/Client</h3> 
+
+The following instructions assume docker is installed. 
 
 Edit following files and change port settings as approriate. You will need a port for both the client and server. The defaults are port 80 for the client and port 3000 for the server. 
 

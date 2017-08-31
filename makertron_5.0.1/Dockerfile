@@ -33,6 +33,6 @@ WORKDIR /usr/src/app
 
 RUN export DEBUG=*	
 EXPOSE 3000
-EXPOSE 80
+EXPOSE 8080
 
 CMD [ "npm", "start" ]

@@ -33,6 +33,9 @@ var io = require('socket.io')(server_http)
 var log = require('simple-node-logger').createSimpleLogger('project.log');
 	 
 var debug = require('debug')
+
+debug.log = console.info.bind(console);
+
 var https = require('https');
 var request = require("request");
 var fs = require('file-system');
@@ -101,6 +104,8 @@ var makertron_server = (function () {
 		var StructType = require('ref-struct');
 		var ffi = require("ffi");
 		var debug = require("debug") 
+		debug.log = console.info.bind(console);
+
 		var fs = require("file-system") 
 		var heartbeats = require('heartbeats');
 		var heart = heartbeats.createHeart(1000);
