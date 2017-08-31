@@ -18,9 +18,11 @@ This is in sharp contrast to the OpenSCAD project design where the interface and
 
 All of the core components are currently in a Docker image and docker will be required for its execution. 
 
-For Windows Seven <a href="https://docs.docker.com/toolbox/toolbox_install_windows/">Install Docker W7 ( long involved VM mess ) 
+As an alternative you can play with the live demo <a href="http://makertron.io">makertron.io</a>
 
-For All Others <a href="https://docs.docker.com/engine/installation/">Install Docker For Others</a>
+For <a href="https://docs.docker.com/toolbox/toolbox_install_windows/">W7</a>  
+
+For All <a href="https://docs.docker.com/engine/installation/">Linux/OSX/W8/W10/Others</a>
 
 <h3>To install the Combined Server/Client</h3> 
 
