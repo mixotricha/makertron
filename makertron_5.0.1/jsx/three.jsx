@@ -46,6 +46,9 @@
 			this.onMouseUp = this.onMouseUp.bind(this);
 			this.onMouseDown = this.onMouseDown.bind(this);
 			this.onMouseWheel = this.onMouseWheel.bind(this);
+			this.onTouchMove = this.onTouchMove(this); 
+			this.onTouchStart = this.onTouchStart(this); 
+			this.onTouchEnd = this.onTouchEnd(this); 
   	}	
 
 		onMouseMove( event ) { 	
@@ -63,6 +66,18 @@
 		 
 		onMouseWheel( event ) { 
 			this.controls.onMouseWheel(event)
+		}
+
+		onTouchMove( event ) { 
+			this.controls.onTouchMove(event)
+		}
+
+		onTouchStart( event ) { 
+			this.controls.onTouchStart(event)
+		}
+
+		onTouchEnd( event ) { 
+			this.controls.onTouchEnd(event)
 		}
 
 		init_scene() {

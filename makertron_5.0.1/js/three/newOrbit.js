@@ -238,6 +238,56 @@ module.exports = function OrbitControls(THREE,  object , container ) {
 			this.update();
 		}
 
+		//
+		// touch event handlers 
+		//
+		
+		this.handleTouchStartRotate = function( event ) { this.rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ); }
+
+		this.handleTouchStartDolly = function( event ) {
+			var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+			var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+			var distance = Math.sqrt( dx * dx + dy * dy );
+			this.dollyStart.set( 0, distance );
+		}
+
+		this.handleTouchStartPan = function( event ) { this.panStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ); }
+
+		this.handleTouchMoveRotate = function( event ) {
+			this.rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+			this.rotateDelta.subVectors( this.rotateEnd, this.rotateStart );
+			// rotating across whole screen goes 360 degrees around
+			this.rotateLeft( 2 * Math.PI * this.rotateDelta.x / this.container.clientWidth * this.rotateSpeed );
+			// rotating up and down along whole screen attempts to go 360, but limited to 180
+			this.rotateUp( 2 * Math.PI * this.rotateDelta.y / this.container.clientHeight * this.rotateSpeed );
+			this.rotateStart.copy( this.rotateEnd );
+			this.update();
+		}
+
+		this.handleTouchMoveDolly = function( event ) {
+			var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+			var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+			var distance = Math.sqrt( dx * dx + dy * dy );
+			this.dollyEnd.set( 0, distance );
+			this.dollyDelta.subVectors( this.dollyEnd, this.dollyStart );
+			if ( this.dollyDelta.y > 0 ) {
+				this.dollyOut( this.getZoomScale() );
+			} else if ( this.dollyDelta.y < 0 ) {
+				this.dollyIn( this.getZoomScale() );
+			}
+			this.dollyStart.copy( this.dollyEnd );
+			this.update();
+		}
+
+		this.handleTouchMovePan = function( event ) {
+			this.panEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+			this.panDelta.subVectors( this.panEnd, this.panStart );
+			this.pan( panDelta.x, panDelta.y );
+			this.panStart.copy( this.panEnd );
+			this.update();
+		}
+
+		this.handleTouchEnd = function( event ) {}
 
 		//
 		// event handlers - FSM: listen for events and reset this.state
@@ -291,6 +341,59 @@ module.exports = function OrbitControls(THREE,  object , container ) {
 			this.handleMouseWheel( event );
 		}
 
+		this.onTouchStart = function( event ) {
+			if ( this.enabled === false ) return;
+			switch ( event.touches.length ) {
+				case 1:	// one-fingered touch: rotate
+					if ( this.enableRotate === false ) return;
+					this.handleTouchStartRotate( event );
+					this.state = this.STATE.TOUCH_ROTATE;
+					break;
+				case 2:	// two-fingered touch: dolly
+					if ( this.enableZoom === false ) return;
+					this.handleTouchStartDolly( event );
+					this.state = this.STATE.TOUCH_DOLLY;
+					break;
+				case 3: // three-fingered touch: pan
+					if ( this.enablePan === false ) return;
+					this.handleTouchStartPan( event );
+					this.state = this.STATE.TOUCH_PAN;
+					break;
+				default:
+					this.state = this.STATE.NONE;
+			}
+		}
+
+		this.onTouchMove = function( event ) {
+			if ( this.enabled === false ) return;
+			event.preventDefault();
+			event.stopPropagation();
+			switch ( event.touches.length ) {
+				case 1: // one-fingered touch: rotate
+					if ( this.enableRotate === false ) return;
+					if ( this.state !== this.STATE.TOUCH_ROTATE ) return; // is this needed?...
+					this.handleTouchMoveRotate( event );
+					break;
+				case 2: // two-fingered touch: dolly
+					if ( this.enableZoom === false ) return;
+					if ( this.state !== this.STATE.TOUCH_DOLLY ) return; // is this needed?...
+					this.handleTouchMoveDolly( event );
+					break;
+				case 3: // three-fingered touch: pan
+					if ( this.enablePan === false ) return;
+					if ( this.state !== this.STATE.TOUCH_PAN ) return; // is this needed?...
+					this.handleTouchMovePan( event );
+					break;
+				default:
+					this.state = this.STATE.NONE;
+			}
+		}
+
+		this.onTouchEnd = function( event ) {
+			if ( this.enabled === false ) return;
+			this.handleTouchEnd( event );
+			this.state = this.STATE.NONE;
+		}
 
 };
 
