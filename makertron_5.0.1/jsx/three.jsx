@@ -46,9 +46,9 @@
 			this.onMouseUp = this.onMouseUp.bind(this);
 			this.onMouseDown = this.onMouseDown.bind(this);
 			this.onMouseWheel = this.onMouseWheel.bind(this);
-			this.onTouchMove = this.onTouchMove(this); 
-			this.onTouchStart = this.onTouchStart(this); 
-			this.onTouchEnd = this.onTouchEnd(this); 
+			this.onTouchMove = this.onTouchMove.bind(this); 
+			this.onTouchStart = this.onTouchStart.bind(this); 
+			this.onTouchEnd = this.onTouchEnd.bind(this); 
   	}	
 
 		onMouseMove( event ) { 	
