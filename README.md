@@ -99,6 +99,8 @@ It is our opinion that this effort has stalled and something new needed to be de
 
 A few good efforts are being made at this and they may improve in the future. We are adding our own to the list. 
 
+<a href="http://composition.al/blog/2017/07/30/what-do-people-mean-when-they-say-transpiler/">What Do People Mean When They Say Transpiler?</a>
+
 <h4>A practical requirement for source code transformation systems is that they be able to effectively process programs written in a programming language. This usually requires integration of a full front-end for the programming language of interest, including source code parsing, building internal program representations of code structures, the meaning of program symbols, useful static analyses, and regeneration of valid source code from transformed program representations. <b>The problem of building and integrating adequate front ends for conventional languages (Java, C++, PHP, ...) may be of equal difficulty as building the program transformation system itself because of the complexity of such languages</b>. To be widely useful, a transformation system must be able to handle many target programming languages, and must provide some means of specifying such front ends.
 </h4>
 

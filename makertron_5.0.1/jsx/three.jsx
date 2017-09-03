@@ -30,6 +30,7 @@
 	import React from 'react';
 	import ReactDOM from 'react-dom';
 	import THREE from '../js/three/three.js'
+	import OrbitControls from '../js/three/newOrbit.js' 
 
 	var dark_primary_color  = "#303F9F" 
 	var primary_width = '95vw' 
@@ -47,179 +48,23 @@
 			this.onMouseWheel = this.onMouseWheel.bind(this);
   	}	
 
-		// Setup the orbit control state 
-		orbit_init() { 	
-			// API
-			this.enabled = true;
-			this.center = new THREE.Vector3();
-			this.userZoom = true;
-			this.userZoomSpeed = 1.0;
-			this.userRotate = true;
-			this.userRotateSpeed = 1.0;
-			this.userPan = true;
-			this.userPanSpeed = 2.0;
-			this.autoRotate = false;
-			this.autoRotateSpeed = 2.0; // 30 seconds per round when fps is 60
-			this.minPolarAngle = 0; // radians
-			this.maxPolarAngle = Math.PI; // radians
-			this.minDistance = 0;
-			this.maxDistance = Infinity;
-			this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
-			// internals
-			this.scope = this;
-			this.EPS = 0.000001;
-			this.PIXELS_PER_ROUND = 1800;
-			this.rotateStart = new THREE.Vector2();
-			this.rotateEnd = new THREE.Vector2();
-			this.rotateDelta = new THREE.Vector2();
-			this.zoomStart = new THREE.Vector2();
-			this.zoomEnd = new THREE.Vector2();
-			this.zoomDelta = new THREE.Vector2();
-			this.phiDelta = 0;
-			this.thetaDelta = 0;
-			this.scale = 1;
-			this.lastPosition = new THREE.Vector3();
-			this.STATE_WTF = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2 };
-			this.state_wtf = this.STATE_WTF.NONE;
-			this.lastX = 0; 
-			this.lastY = 0;
-			// events
-			this.changeEvent = { type: 'change' };
-		}
-		rotateLeft( angle  ) { if ( angle === undefined ) {	angle = this.getAutoRotationAngle(); } this.thetaDelta -= angle; }
-		rotateRight( angle ) { if ( angle === undefined ) { angle = this.getAutoRotationAngle(); } this.thetaDelta += angle; }
-		rotateUp( angle    ) { if ( angle === undefined ) { angle = this.getAutoRotationAngle(); } this.phiDelta -= angle;   }
-		rotateDown( angle  ) { if ( angle === undefined ) { angle = this.getAutoRotationAngle(); } this.phiDelta += angle;   }
-		zoomIn( zoomScale  ) { if ( zoomScale === undefined ) { zoomScale = this.getZoomScale(); } this.scale /= zoomScale;  }
-		zoomOut( zoomScale ) { if ( zoomScale === undefined ) { zoomScale = this.getZoomScale(); } this.scale *= zoomScale;  }
-		pan( distance ) {
-			distance.transformDirection( this.camera.matrix );
-			distance.multiplyScalar( this.userPanSpeed );
-			this.camera.position.add( distance );
-			this.center.add( distance );
-		}
-		getAutoRotationAngle() { return 2 * Math.PI / 60 / 60 * this.autoRotateSpeed; }
-		getZoomScale() { return Math.pow( 0.95, this.userZoomSpeed ); }
-		// update orbit control
-		orbit_update() {
-			var position = this.camera.position;
-			var offset = position.clone().sub( this.center );
-			// angle from z-axis around y-axis
-			var theta = Math.atan2( offset.x, offset.z );
-			// angle from y-axis
-			var phi = Math.atan2( Math.sqrt( offset.x * offset.x + offset.z * offset.z ), offset.y );
-			if ( this.autoRotate ) {
-				this.rotateLeft( this.getAutoRotationAngle() );
-			}
-			theta += this.thetaDelta;
-			phi += this.phiDelta;
-			// restrict phi to be between desired limits
-			phi = Math.max( this.minPolarAngle, Math.min( this.maxPolarAngle, phi ) );
-			// restrict phi to be betwee EPS and PI-EPS
-			phi = Math.max( this.EPS, Math.min( Math.PI - this.EPS, phi ) );
-			var radius = offset.length() * this.scale;
-			// restrict radius to be between desired limits
-			radius = Math.max( this.minDistance, Math.min( this.maxDistance, radius ) );
-			offset.x = radius * Math.sin( phi ) * Math.sin( theta );
-			offset.y = radius * Math.cos( phi );
-			offset.z = radius * Math.sin( phi ) * Math.cos( theta );
-			position.copy( this.center ).add( offset );
-			this.camera.lookAt( this.center );
-			this.thetaDelta = 0;
-			this.phiDelta = 0;
-			this.scale = 1;
-			if ( this.lastPosition.distanceTo( this.camera.position ) > 0 ) {
-				this.lastPosition.copy( this.camera.position );
-			}
+		onMouseMove( event ) { 	
+			this.controls.onMouseMove(event)		
 			this.render_scene()
 		}
-		// Mouse Movement
-		onMouseMove(event) {
-    	if ( this.enabled === false ) return;
-			if ( this.state_wtf === this.STATE_WTF.ROTATE ) {
-				this.rotateEnd.set( event.clientX, event.clientY );
-				this.rotateDelta.subVectors( this.rotateEnd, this.rotateStart );
-				this.rotateLeft( 2 * Math.PI * this.rotateDelta.x / this.PIXELS_PER_ROUND * this.userRotateSpeed );
-				this.rotateUp( 2 * Math.PI * this.rotateDelta.y / this.PIXELS_PER_ROUND * this.userRotateSpeed );
-				this.rotateStart.copy( this.rotateEnd );
-				this.orbit_update()
-			} else if ( this.state_wtf === this.STATE_WTF.ZOOM ) {
-				this.zoomEnd.set( event.clientX, event.clientY );
-				this.zoomDelta.subVectors( this.zoomEnd, this.zoomStart );
-				if ( this.zoomDelta.y > 0 ) {
-					this.zoomIn();
-					this.orbit_update()
-				} else {
-					this.zoomOut();
-					this.orbit_update()
-				}
-				this.zoomStart.copy( this.zoomEnd );
-			} else if ( this.state_wtf === this.STATE_WTF.PAN ) {
-				var movementX = event.clientX + this.lastX
-				var movementY = event.clientY + this.lastY 
-				//var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-				//var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-				//console.log( movementX , movementY ) 
-				this.pan( new THREE.Vector3( - movementX, movementY, 0 ) );
-				this.orbit_update()
-				this.lastX = movementX
-				this.lastY = movementY  
-			}
-  	}
-		// On mouse click down 
-		onMouseDown(event) {
-    	if ( this.enabled === false ) return;
-			if ( this.userRotate === false ) return;
-			if ( event.button === 0 ) {
-				this.state_wtf = this.STATE_WTF.ROTATE;
-				this.rotateStart.set( event.clientX, event.clientY );
-			} else if ( event.button === 1 ) {
-					this.state_wtf = this.STATE_WTF.ZOOM;
-					this.zoomStart.set( event.clientX, event.clientY );
-			} else if ( event.button === 2 ) {
-					this.state_wtf = this.STATE_WTF.PAN;
-			}
-  	}
-		onMouseUp(event) {
-			if ( this.enabled === false ) return;
-			if ( this.userRotate === false ) return;
-			this.state_wtf = this.STATE_WTF.NONE;
+
+		onMouseDown( event ) { 
+			this.controls.onMouseDown(event) 
 		}
-		onMouseWheel( event ) {
-			event.preventDefault()
-			if ( this.enabled === false ) return;
-			if ( this.userZoom === false ) return;
-			if ( event.deltaY < 0 ) {
-				this.zoomOut();
-				this.orbit_update()
-			} else {
-				this.zoomIn();
-				this.orbit_update()
-			}
+
+		onMouseUp( event ) { 
+			this.controls.onMouseUp(event)
 		}
-		onTouchStart(event) { 
-			if ( this.enabled === false ) return;
-			if ( this.userRotate === false ) return;
-			this.state_wtf = this.STATE_WTF.ROTATE;
-			this.rotateStart.set( event.touches[0].clientX, event.touches[0].clientY );
+		 
+		onMouseWheel( event ) { 
+			this.controls.onMouseWheel(event)
 		}
-		onTouchEnd(event) { 
-			if ( this.enabled === false ) return;
-			if ( this.userRotate === false ) return;
-			this.state_wtf = this.STATE_WTF.NONE;
-		}
-		onTouchMove(event) { 
-			event.preventDefault()
-			if ( this.enabled === false ) return;
-			if ( this.state_wtf === this.STATE_WTF.ROTATE ) {
-				this.rotateEnd.set( event.touches[0].clientX, event.touches[0].clientY );
-				this.rotateDelta.subVectors( this.rotateEnd, this.rotateStart );
-				this.rotateLeft( 2 * Math.PI * this.rotateDelta.x / this.PIXELS_PER_ROUND * this.userRotateSpeed );
-				this.rotateUp( 2 * Math.PI * this.rotateDelta.y / this.PIXELS_PER_ROUND * this.userRotateSpeed );
-				this.rotateStart.copy( this.rotateEnd );
-				this.orbit_update()
-			} 
-		} 
+
 		init_scene() {
 			this.container = document.getElementById("three_canvas");
 			this.width = this.container.clientWidth; 
@@ -232,7 +77,9 @@
 			this.camera = new THREE.PerspectiveCamera( 45 , this.width / this.height, 1, 10000 );
 			this.camera.position.set( 400,400 , 400 ); 
 			this.camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
-			this.orbit_init()
+
+			this.controls = new OrbitControls( THREE , this.camera , this.container ) 
+
 			this.scene = new THREE.Scene(); 	
 			this.container.appendChild( this.renderer.domElement ); // bind to the container element 
 		}
@@ -351,11 +198,11 @@
 		componentDidMount() { 
 			this.init_scene()
 			this.update_scene() 			
-			this.orbit_update()
+			this.resize_scene()
 		}
 		componentDidUpdate() { 	
 			this.update_scene() 			
-			this.orbit_update()
+			this.resize_scene()
 		}
 		render() {
     	return (

@@ -248,7 +248,7 @@ var makertron_server = (function () {
 			// Openscad Sphere 
 			// =====================================================
 			out.create_sphere = function() { 
-				this.logger("Sphere: ",arguments[0])
+				this.logger("Sphere")
 				var r = undefined , d = undefined 
 				// Bit smarter management of arguments. Accept arrays. Each value overides a previous value but only one other argument will be size.    
 				var keys = Object.keys(arguments[0])
@@ -275,7 +275,7 @@ var makertron_server = (function () {
 			// Openscad Cube 
 			// ===============================================================
 			out.create_cube = function() {
-				this.logger("Cube",arguments[0])
+				this.logger("Cube")
 				var x = 0
 				var y = 0 
 				var z = 0

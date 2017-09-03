@@ -266,6 +266,9 @@
 			//catch(e) { 
 			//	console.log( "Feature Detection Offscreen Canvas failed" , e) 
 			//}
+			$('#mainview').on("contextmenu",function(){
+       return false;
+    	}); 
 		}
   	componentWillUnmount() {
 		}
@@ -279,7 +282,7 @@
     		<div style={styles.whole_page}>
 					<div>{this.Login()}</div>
 					<SplitPane split="vertical"  primary="first" defaultSize={$(window).width()-600}>
-						<div>
+						<div id='mainview'>
 	      	  	<div style={styles.viewport}>{this.viewer()}</div>
 							<div id="gearstart" style={styles.gears}><img width="100" height="90" src="resource/imgs/gears_started.gif"/></div>
 							<div id="gearstop" style={styles.gears}><img width="100" height="90" src="resource/imgs/gears_stopped.gif"/></div>
