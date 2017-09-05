@@ -35,6 +35,7 @@ var secondary_width = '94vw'
 var canvas_width = '93.2vw'
 
 module.exports = class ThreeComponent extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -48,36 +49,43 @@ module.exports = class ThreeComponent extends React.Component {
         this.onTouchStart = this.onTouchStart.bind(this);
         this.onTouchEnd = this.onTouchEnd.bind(this);
     }
-		// on move
+
+    // on move
     onMouseMove(event) {
         this.controls.onMouseMove(event)
         this.render_scene()
     }
-		// on down 
+
+    // on down 
     onMouseDown(event) {
         this.controls.onMouseDown(event)
     }
-		// on up 
+
+    // on up 
     onMouseUp(event) {
         this.controls.onMouseUp(event)
     }
-		// on wheel 
+    // on wheel 
     onMouseWheel(event) {
         this.controls.onMouseWheel(event)
     }
-		// touch move
+
+    // touch move
     onTouchMove(event) {
         this.controls.onTouchMove(event)
     }
-		// touch start
+
+    // touch start
     onTouchStart(event) {
         this.controls.onTouchStart(event)
     }
-		// touch end 
+
+    // touch end 
     onTouchEnd(event) {
         this.controls.onTouchEnd(event)
     }
-		// init the scene
+
+    // init the scene
     init_scene() {
         this.container = document.getElementById("three_canvas");
         this.width = this.container.clientWidth;
@@ -97,7 +105,8 @@ module.exports = class ThreeComponent extends React.Component {
         this.scene = new THREE.Scene();
         this.container.appendChild(this.renderer.domElement); // bind to the container element 
     }
-		// resize
+
+    // resize
     resize_scene() {
         var container = document.getElementById("three_canvas");
         var width = container.clientWidth;
@@ -106,12 +115,14 @@ module.exports = class ThreeComponent extends React.Component {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
     }
-		// render 
+
+    // render 
     render_scene() { // Render out to canvas 
         this.resize_scene();
         this.renderer.render(this.scene, this.camera);
     }
-		// lights
+
+    // lights
     lights() {
         this.scene.add(new THREE.AmbientLight(0xffffff));
         var back_light = new THREE.SpotLight(0xefefef, 0.2);
@@ -133,11 +144,13 @@ module.exports = class ThreeComponent extends React.Component {
         front_light.shadow.darkness = 0.5;
         this.scene.add(front_light);
     }
-		// deg return rad
+
+    // deg return rad
     radians(deg) {
         return deg * (Math.PI / 180);
     }
-		// objects to be rendered in to scene. Really want the offscreen canvas so this can go in worker!
+
+    // objects to be rendered in to scene. Really want the offscreen canvas so this can go in worker!
     createObject(geoBuffer) {
         var i = 0,
             f = 0,
@@ -181,13 +194,14 @@ module.exports = class ThreeComponent extends React.Component {
         return msh
     }
 
+    // update scene
     update_scene() {
         var _this = this
         var i = 0
         this.scene = new THREE.Scene();
-				// lights
+        // lights
         this.lights();
-				// geometry 
+        // geometry 
         var geometry = new THREE.PlaneGeometry(5000, 5000);
         var material = new THREE.MeshLambertMaterial({
             side: THREE.DoubleSide,
@@ -195,13 +209,13 @@ module.exports = class ThreeComponent extends React.Component {
             transparent: true,
             opacity: 0.2
         });
-				// lower scene plane
+        // lower scene plane
         var plane = new THREE.Mesh(geometry, material);
         plane.receiveShadow = true;
         plane.rotation.set(this.radians(90), 0, 0)
         plane.position.set(0, -500, 0);
         this.scene.add(plane);
-				// grid
+        // grid
         var size = 400;
         var divisions = 5;
         var gridHelper_a = new THREE.GridHelper(size, divisions, 0x718EA4, 0x718EA4);
@@ -210,7 +224,7 @@ module.exports = class ThreeComponent extends React.Component {
         var divisions = 40;
         var gridHelper_b = new THREE.GridHelper(size, divisions, 0x123652, 0x123652);
         this.scene.add(gridHelper_b);
-				// axis lines
+        // axis lines
         var axisHelper = new THREE.AxisHelper(400);
         this.scene.add(axisHelper);
         for (i = 0; i < this.props.data.length; i++) {
@@ -221,27 +235,29 @@ module.exports = class ThreeComponent extends React.Component {
     }
 
     componentWillMount() {}
+
     componentDidMount() {
         this.init_scene()
         this.update_scene()
         this.resize_scene()
     }
+
     componentDidUpdate() {
         this.update_scene()
         this.resize_scene()
     }
+
     render() {
         return ( <
             div id = "three_canvas"
-            style = {{ 'width': canvas_width, 'height': '88vh', 'background': dark_primary_color }}
-            onMouseMove = { this.onMouseMove }
-            onMouseDown = { this.onMouseDown }
-            onMouseUp =   { this.onMouseUp }
-            onWheel = { this.onMouseWheel }
-            onTouchMove = { this.onTouchMove }
-            onTouchStart = { this.onTouchStart }
-            onTouchEnd = { this.onTouchEnd
-            }
+            style = { { 'width': canvas_width, 'height': '88vh', 'background': dark_primary_color } } 
+                onMouseMove = {this.onMouseMove} 
+                onMouseDown = {this.onMouseDown} 
+                onMouseUp = {this.onMouseUp} 
+                onWheel = {this.onMouseWheel} 
+                onTouchMove = {this.onTouchMove} 
+                onTouchStart = {this.onTouchStart} 
+                onTouchEnd = {this.onTouchEnd}
             />
         );
     }
