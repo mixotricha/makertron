@@ -27,17 +27,15 @@ var csgProcess = (function () {
 
  /*global $,widgets,window,CSG,document,makertron*/
  /*jshint -W069 */
-	
+
 	importScripts('three/three.js');
-	importScripts('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js')  
 	importScripts('core/lodash.min.js') 
 
 	 // Pull server address here because no dom for sessionKeys 
   importScripts("config.js"); 
 
   SERVER_ADDRESS = SERVER_ADDRESS + ":" + SERVER_PORT;
-	var socket
-	
+		
 	// ============================================================
 	// Generate three cube 
 	// ============================================================
@@ -52,14 +50,14 @@ var csgProcess = (function () {
 	var postResult = function(result) { 
 			postLog('{"0":"Finished processing on server..."}') 
 			postMessage({ type: 'result' , data: result })
-			socket.emit( 'close'               , ""  ) // we are done close socket 
+			close()
 	}
 
 	// =============================================================
 	// Post log results back from worker 
 	// =============================================================
 	var postLog = function(result) {
-		postMessage( { type: 'log' , data: arguments[0] } )
+		postMessage( { type: 'log' , data: result } )
 	}
 
 	// =============================================================
@@ -67,7 +65,6 @@ var csgProcess = (function () {
 	// =============================================================
 	var reportError = function() {
 		postMessage( { type: 'error' , data: "Failed to connect to server\n" } )
-		socket.close()
 	}
 
 	// =============================================================
@@ -78,28 +75,42 @@ var csgProcess = (function () {
 	}
 
 	var close = function() { 
-		postMessage({ type: 'close' , data: "" })
+		postMessage( { type: 'close' , data: "" } )
 	}
+
+	// --------------------------------------------------------
+	// Generate a hashed string
+	// --------------------------------------------------------
+	var makeId = function() {
+		var text = "";
+		var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for( var i=0; i < 5; i++ )
+		text += possible.charAt(Math.floor(Math.random() * possible.length));
+		return text;
+	}
+
 
 	// =============================================================
 	// Fetch The Geometry   
 	// =============================================================	
 	var fetchGeometry = function(script) {  
-			
-			 
-			socket = io(SERVER_ADDRESS,{ 'connect timeout': 5000 })
-			
-			socket.error
-			socket.emit( 'OPENSCAD'               , {script:script}  ) // send script
-			socket.on  ( 'OPENSCADRES'            , postResult       )  
-			socket.on  ( 'OPENSCADLOG'            , postLog          )  
-			socket.on  ( 'connection_refused'     , reportError      ) 
-			socket.on  ( 'PULSE'                  , pulse            )
-		  socket.on  ( 'close'                  , close            )
-			socket.on  ( 'error'                  , reportError      ) 
-			socket.on  ( 'connect_failed'         , reportError      )
-			socket.on  ( 'reconnect_failed'       , reportError      )
-			socket.on  ( 'connect_error'          , reportError      )
+		let socket = new WebSocket(SERVER_ADDRESS);
+
+		socket.onopen = function() { 
+			socket.send(  JSON.stringify({ 'type': 'OPENSCAD' , 'data' : script}) ) 
+			socket.onmessage = function(event) {
+				let message = JSON.parse(event['data']) 
+				if ( message['type'] === 'OPENSCADRES' ) { postResult(message['data']); socket.close() }
+				if ( message['type'] === 'OPENSCADLOG' ) { postLog(message['data'])    									}
+				if ( message['type'] === 'PULSE'       ) { pulse();                    									}
+			} 
+		}; 
+
+		socket.close = function() { 
+			console.log("closed")
+			close(); 
+		}
+
 	}
 
 	// Output our scene to the renderer 
@@ -114,3 +125,5 @@ var csgProcess = (function () {
 	};
  
 }());
+
+

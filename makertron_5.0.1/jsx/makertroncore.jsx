@@ -212,6 +212,7 @@
 				}
 				if ( data['type'] === "close" ) { 
 					_this.setState({ connected: false  })	
+					_this.progressStop()
 				}
 				if ( data['type'] === "error" ) { 
 					_this.updateLog(data['data']) 

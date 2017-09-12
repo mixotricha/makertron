@@ -53,36 +53,42 @@ module.exports = class ThreeComponent extends React.Component {
     // on move
     onMouseMove(event) {
         this.controls.onMouseMove(event)
-        this.render_scene()
+				this.render_scene()
     }
 
     // on down 
     onMouseDown(event) {
         this.controls.onMouseDown(event)
+				this.render_scene()
     }
 
     // on up 
     onMouseUp(event) {
         this.controls.onMouseUp(event)
+				this.render_scene()
     }
     // on wheel 
     onMouseWheel(event) {
         this.controls.onMouseWheel(event)
+				this.render_scene()
     }
 
     // touch move
     onTouchMove(event) {
         this.controls.onTouchMove(event)
+				this.render_scene()
     }
 
     // touch start
     onTouchStart(event) {
         this.controls.onTouchStart(event)
+				this.render_scene()
     }
 
     // touch end 
     onTouchEnd(event) {
         this.controls.onTouchEnd(event)
+				this.render_scene()
     }
 
     // init the scene
@@ -234,17 +240,20 @@ module.exports = class ThreeComponent extends React.Component {
         }
     }
 
+
     componentWillMount() {}
 
     componentDidMount() {
         this.init_scene()
         this.update_scene()
         this.resize_scene()
+				this.render_scene()
     }
 
     componentDidUpdate() {
         this.update_scene()
         this.resize_scene()
+				this.render_scene() 
     }
 
     render() {

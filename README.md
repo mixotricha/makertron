@@ -28,7 +28,7 @@ For All <a href="https://docs.docker.com/engine/installation/">Linux/OSX/W8/W10/
 
 The following instructions assume docker is installed. 
 
-Edit following files and change port settings as approriate. You will need a port for both the client and server. The defaults are port 80 for the client and port 3000 for the server. 
+Edit following files and change port settings as approriate. You will need a port for both the client and server. The defaults are port 8080 for the client and port 3000 for the server. 
 
 makertron/DockerFile 
 
