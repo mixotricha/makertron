@@ -30,7 +30,7 @@ const express = require('express');
 const app = express();
 const WebSocket = require('ws');
 const log = require('simple-node-logger').createSimpleLogger('project.log');
-const { fork } = require('child_process');
+const child_process = require('child_process');
 const config = require('./js/config.js');
 
 let beat = '{"type":"PULSE","data":""}';
@@ -39,24 +39,30 @@ let beat = '{"type":"PULSE","data":""}';
 let makertron_server = (function () {
   log.info( "Makertron Starting Version: " + VERSION );
 	const wss = new WebSocket.Server({ port: SERVER_PORT });
-	wss.on('connection', function connection(socket) { 
-		let forked = fork('./process_scad.js');
-		let heartBeat = setInterval(() => { socket.send(beat); }, 25000);
-		socket.on('message', (str) => { 
-			let message = JSON.parse(str);  
-			if ( message['type'] === 'OPENSCAD' ) { 
-				forked.send({ result: message['data'] })
-				forked.on('message', (data) => { 
-					if ( data['type'] === "log"    ) { socket.send(JSON.stringify({ type: 'OPENSCADLOG' ,  data: data['data']})); }
-					if ( data['type'] === "object" ) { socket.send(JSON.stringify({ type: 'OPENSCADRES' ,  data: data['data']})); }
-				});
-			}	
-		}) 
-		socket.on('close', ()=>{
-			log.info("Socket closed");  
-			clearInterval(heartBeat); 
-			forked.kill(); 
-		})
+		wss.on('connection', function connection(socket) {
+			try {  
+				let forked = child_process.fork('./process_scad.js');
+				let heartBeat = setInterval(() => { socket.send(beat); }, 25000);
+				socket.on('message', (str) => { 
+					let message = JSON.parse(str);  
+					if ( message['type'] === 'OPENSCAD' ) { 
+						forked.send(JSON.stringify({result: message['data']}))
+						forked.on('message', (data) => { 
+							data = JSON.parse(data); 
+							if ( data['type'] === "log"    ) { socket.send(JSON.stringify({ type: 'OPENSCADLOG' ,  data: data['data']}));                 }
+							if ( data['type'] === "objects" ) { socket.send(JSON.stringify({ type: 'OPENSCADRES' ,  data: data['data']})); socket.close(); }
+						});
+					}	
+				}) 
+				socket.on('close', ()=>{
+					log.info("Socket closed");  
+					clearInterval(heartBeat); 
+					forked.kill(); 
+				})
+			}
+			catch(e) { 
+				log.info("Fatal error occured")
+			}
 	});
 }());
 

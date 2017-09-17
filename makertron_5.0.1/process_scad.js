@@ -21,6 +21,11 @@
 	 *                                                                         *
 	 ***************************************************************************/
 
+	"use strict" 
+	/*global require,console,__dirname,VERSION,SERVER_PORT,CLIENT_PORT*/
+	/*jshint -W069 */
+	/*jslint node: true */
+
 	const lodash = require('lodash'); 
 	const ref = require("ref");
 	const ArrayType = require('ref-array');
@@ -652,66 +657,75 @@
 						if ( this.stack[i][ii]['done'] === false ) {  
 							let objects = this.children_complete( this.stack[i][ii]['operation'] , this.stack[i][ii]['id'] ); 
 							if ( objects !== false ) { 
-
-								if ( this.stack[i][ii]['operation'] === "translate" ) {  
-									for ( iii = 0; iii < objects.length; iii++ ) {
-										this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
-										objects[iii] = this.create_translate( this.stack[i][ii]['arguments'] ); 
-										this.stack[i][ii]['arguments']['obj'] = []; 
+							switch( this.stack[i][ii]['operation'] ) { 
+									case "translate" : {  
+										for ( iii = 0; iii < objects.length; iii++ ) {
+											this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
+											objects[iii] = this.create_translate( this.stack[i][ii]['arguments'] ); 
+											this.stack[i][ii]['arguments']['obj'] = []; 
+										}
+										this.stack[i][ii]['objects'] = ( objects );  
+										this.stack[i][ii]['done'] = true; 	
+										out.walk();
+										break;
 									}
-									this.stack[i][ii]['objects'] = ( objects );  
-									this.stack[i][ii]['done'] = true; 	
-									out.walk();
-								}
 
-								if ( this.stack[i][ii]['operation'] === "scale" ) {  
-									for ( iii = 0; iii < objects.length; iii++ ) {
-										this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
-										objects[iii] = this.create_scale( this.stack[i][ii]['arguments'] ); 
-										this.stack[i][ii]['arguments']['obj'] = []; 
+									case "scale" : {  
+										for ( iii = 0; iii < objects.length; iii++ ) {
+											this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
+											objects[iii] = this.create_scale( this.stack[i][ii]['arguments'] ); 
+											this.stack[i][ii]['arguments']['obj'] = []; 
+										}
+										this.stack[i][ii]['objects'] = ( objects );  
+										this.stack[i][ii]['done'] = true; 	
+										out.walk();
+										break;
 									}
-									this.stack[i][ii]['objects'] = ( objects );  
-									this.stack[i][ii]['done'] = true; 	
-									out.walk();
-								}
 
-								if ( this.stack[i][ii]['operation'] === "rotate" ) {  
-									for ( iii = 0; iii < objects.length; iii++ ) {
-										this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
-										objects[iii] = this.create_rotate( this.stack[i][ii]['arguments'] ); 
-										this.stack[i][ii]['arguments']['obj'] = []; 
+									case "rotate" : {  
+										for ( iii = 0; iii < objects.length; iii++ ) {
+											this.stack[i][ii]['arguments']['obj'] = objects[iii]; 		 
+											objects[iii] = this.create_rotate( this.stack[i][ii]['arguments'] ); 
+											this.stack[i][ii]['arguments']['obj'] = []; 
+										}
+										this.stack[i][ii]['objects'] =  objects;   
+										this.stack[i][ii]['done'] = true; 	
+										out.walk();
+										break;
 									}
-									this.stack[i][ii]['objects'] =  objects;   
-									this.stack[i][ii]['done'] = true; 	
-									out.walk();
-								}
-								if ( this.stack[i][ii]['operation'] === "union" ) { 	
-									objects = lodash.flatten(objects); 
-									this.stack[i][ii]['objects'].push( this.create_union({children:objects}) );   
-									this.stack[i][ii]['done'] = true;
-									out.walk(); 	
-								}
-								if ( this.stack[i][ii]['operation'] === "intersection" ) { 	
-									objects = lodash.flatten(objects); 
-									this.stack[i][ii]['objects'].push( this.create_intersection({children:objects}) );   
-									this.stack[i][ii]['done'] = true;
-									out.walk(); 	
-								}
 
-								if ( this.stack[i][ii]['operation'] === "difference" ) { 	
-								  objects = lodash.flatten(objects); 
-									this.stack[i][ii]['objects'].push( this.create_difference({children:objects}) );   
-									this.stack[i][ii]['done'] = true;
-									out.walk(); 	
-								}
+									case "union" : { 	
+										objects = lodash.flatten(objects); 
+										this.stack[i][ii]['objects'].push( this.create_union({children:objects}) );   
+										this.stack[i][ii]['done'] = true;
+										out.walk(); 
+										break;	
+									}
 
-							  if ( this.stack[i][ii]['operation'] === "minkowski" ) { 	
-									objects = lodash.flatten(objects); 
-								 	this.stack[i][ii]['objects'].push( this.create_minkowski({children:objects}) );   
-								 	this.stack[i][ii]['done'] = true;
-									out.walk(); 	
-								}
+									case "intersection" : { 	
+										objects = lodash.flatten(objects); 
+										this.stack[i][ii]['objects'].push( this.create_intersection({children:objects}) );   
+										this.stack[i][ii]['done'] = true;
+										out.walk(); 	
+										break;
+									}
 
+									case "difference" : { 	
+										objects = lodash.flatten(objects); 
+										this.stack[i][ii]['objects'].push( this.create_difference({children:objects}) );   
+										this.stack[i][ii]['done'] = true;
+										out.walk(); 	
+										break;
+									}
+
+									case "minkowski" : { 	
+										objects = lodash.flatten(objects); 
+									 	this.stack[i][ii]['objects'].push( this.create_minkowski({children:objects}) );   
+									 	this.stack[i][ii]['done'] = true;
+										out.walk();
+										break; 	
+									}
+								}
 							}
 						} 
 					}
@@ -719,47 +733,52 @@
 			};
 
 			// defaults for arguments for functions  
-			out.default = function(a,b) { if ( a === undefined ) { return b; } return a; };
+			out.default = (a,b) => { if ( a === undefined ) { return b; } return a; };
 
 			// log output 
-			out.echo = function() {
+			out.echo = function()  {
 				let str = ""; 
 				for ( let i = 0; i < arguments.length; i++ ) { 
 					str += arguments[i]; 
 				}
-				process.send({ type: "echo" , data : str })
+				process.send(JSON.stringify({type:"echo",data:str}))
 			};
 
 			// send log results to client 	
-			out.logger = function() { 
-				process.send({ type: "log" , data: JSON.stringify(arguments) });
+			out.logger = function(str) {  
+				process.send(JSON.stringify({type:"log",data: str }));
 			};
 
 			// send log results to client 	
-			out.error = function() { 
-				process.send({ type: "error" , data: JSON.stringify(arguments) });
+			out.error = function(str) { 
+				process.send(JSON.stringify({type:"error", data: str }));
 			};
 
-			out.debug = function() { 
-				process.send({ type: "debug" , data: JSON.stringify(arguments) });
+			out.debug = function(str) { 
+				process.send(JSON.stringify({type:"debug", data: str}));
 			};
 
 			out.complete = function(objects) { 
-				process.send({ type:"object" , "data" : objects } )
+				process.send(JSON.stringify({type:"objects", data: objects}));
 				out.close();
 			}
 
 			out.close = function() { 
-					process.send({type:"close","data":""})	
+					process.send(JSON.stringify({type:"close",data:""}));	
 			}
 
 			// output result 
-			out.run = function() { 		
+			out.run = function() {
+				let i = 0; 
+				let ii = 0;  		
 				let objects = []; 
-					for ( let i = 0; i < out.stack.length; i++ ) {
-						for ( let ii = 0; ii < out.stack[i].length; ii++ ) { 
-							if  ( out.stack[i][ii]['parent'] === "root" ) { 
-								for ( let iii = 0; iii < out.stack[i][ii]['objects'].length; iii++ ) { 
+				let qLength = out.stack.length; 
+					for ( let i = 0; i < qLength; i++ ) {
+						let rLength = out.stack[i].length;
+						for ( let ii = 0; ii < rLength; ii++ ) { 
+							if  ( out.stack[i][ii]['parent'] === "root" ) {
+								let sLength = out.stack[i][ii]['objects'].length 
+								for ( let iii = 0; iii < sLength; iii++ ) { 
 									objects.push(this.brep_lib.ffi_convert_brep_tostring(out.stack[i][ii]['objects'][iii],this.quality)); 
 								} 
 							}
@@ -808,11 +827,11 @@
 			
 					out.foo(); 
 					out.walk(); 
-					out.complete(out.run()) 
- 					//out.complete("[-1,-1,-1]") 				
+					out.complete(out.run()) 				
 	}
 
 	process.on('message', (data) => {
+		data = JSON.parse(data); 
 	  ProcessScad( data['result'] )
 	});
 	

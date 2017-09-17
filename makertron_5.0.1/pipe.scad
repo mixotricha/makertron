@@ -47,3 +47,14 @@ minkowski() {
  sphere(r=25/2); 
  cylinder(r1=30/2,r2=5/2,h=100/2); 
 }
+
+translate([0,0,-100]) { 
+	for ( x = [0:10:50] ) { 
+		for ( y = [0:10:50] ) { 
+			for ( z = [0:10:50] ) { 
+				translate([x,y,z]) 
+				cube(size=5); 
+			}
+		}
+	}
+}

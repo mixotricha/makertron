@@ -186,37 +186,36 @@
 			$("#gearstop").css('opacity'   ,   1)			
 		}
  		updateScene(result,text) {
-			var _this = this
 			this.progressOn()
 			this.setState({ connected: true  })	
-			var myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
+			let myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
 			myWorker.postMessage( result );
-			myWorker.onmessage = function(e) { 
-				var data = e['data'] 
+			myWorker.onmessage = (e)=> { 
+				let data = JSON.parse(e['data']) 
 				if ( data['type'] === "result" ) {
-					_this.setState({ result: data['data'] })
+					this.setState({ result: data['data'] })
 				}	
 				if ( data['type'] === "log" ) {
-					var out = ""
-					var rows = JSON.parse(data['data'])
-					if ( rows['0'] !== undefined ) out+= rows['0']	 					
-					_this.updateLog(out+"\n")
+					//let out = ""
+					//let rows = JSON.parse(data['data'])
+					//if ( rows['0'] !== undefined ) out+= rows['0']	 					
+					this.updateLog(data['data']+"\n")
 				}
 				if ( data['type'] === "pulse" ) { 
-					if ( _this.state.connected === true ) { 
-						_this.progressOn()
+					if ( this.state.connected === true ) { 
+						this.progressOn()
 					}
 					else { 
-						_this.progressStop()	
+						this.progressStop()	
 					}
 				}
 				if ( data['type'] === "close" ) { 
-					_this.setState({ connected: false  })	
-					_this.progressStop()
+					this.setState({ connected: false  })	
+					this.progressStop()
 				}
 				if ( data['type'] === "error" ) { 
-					_this.updateLog(data['data']) 
-					_this.progressOff()
+					this.updateLog(data['data']) 
+					this.progressOff()
 				}
 			}			 
 		}
@@ -225,7 +224,7 @@
 			this.setState({ log   : txt })
 		}
 		handleDrag(event) {
-			this.setState({ component: true  })	  
+		//	this.setState({ component: true  })	  
 		} 
 		tools() { 
 			return (<Tools patronus={this}/>)
@@ -251,25 +250,16 @@
 			this.setState({component:true})
 		}
 		componentWillMount() { 
-			var _this = this 			
 			if ( sessionStorage.text === undefined ) {
-				$.get( "pipe.scad", function( data ) { 
-					_this.setState({text:data})
-					_this.updateLog("Loading default example...\n") 	
+				$.get( "pipe.scad", ( data ) => { 
+					this.setState({text:data})
+					this.updateLog("Loading default example...\n") 	
 				});
 			} 			 
 		}
 		componentDidMount() {
 			window.addEventListener("resize", this.updateDimensions);
-			//try { 
-			//	var ocanv = new OffscreenCanvas(width, height);
-			//}
-			//catch(e) { 
-			//	console.log( "Feature Detection Offscreen Canvas failed" , e) 
-			//}
-			$('#mainview').on("contextmenu",function(){
-       return false;
-    	}); 
+			$('#mainview').on("contextmenu",()=>{return false;}); 
 		}
   	componentWillUnmount() {
 		}
@@ -278,6 +268,12 @@
 			this.editor()  
 			this.console() 
 		}
+
+		shouldComponentUpdate( nextProps , nextState ) { 
+			if (  nextState.result !== this.state.result || nextState.text !== this.state.text ) { return true; } 
+			return false;  
+		}
+
   	render() {
     	return (
     		<div style={styles.whole_page}>

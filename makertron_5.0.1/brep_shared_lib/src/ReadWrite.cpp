@@ -157,6 +157,7 @@ void ReadWrite::WriteSTL(const TopoDS_Shape& shape)
 
 std::string  ReadWrite::Dump(const TopoDS_Shape& theShape)
 {
+	int fc = 0; 
 	std::stringstream output;
 	output << "[";
   for (TopExp_Explorer exp (theShape, TopAbs_FACE); exp.More(); exp.Next())
@@ -167,12 +168,19 @@ std::string  ReadWrite::Dump(const TopoDS_Shape& theShape)
      gp_Vec aNorm;
      gp_Pnt aPnt1, aPnt2, aPnt3;
      aTool.GetTriangle (iTri, aNorm, aPnt1, aPnt2, aPnt3);
-     output << aPnt1.X() << "," << aPnt1.Y() << "," << aPnt1.Z() << ",";
-     output << aPnt2.X() << "," << aPnt2.Y() << "," << aPnt2.Z() << ",";
-     output << aPnt3.X() << "," << aPnt3.Y() << "," << aPnt3.Z() << ",";
+		 // reversed for three.js 
+		 if ( fc == 0 ) { 
+	     output << aPnt1.Z() << "," << aPnt1.Y() << "," << aPnt1.X();
+		 }
+		 else { 
+			output << "," << aPnt1.Z() << "," << aPnt1.Y() << "," << aPnt1.X();
+		 }
+     output << "," << aPnt2.Z() << "," << aPnt2.Y() << "," << aPnt2.X();
+     output << "," << aPnt3.Z() << "," << aPnt3.Y() << "," << aPnt3.X();
+		 fc = 1; 
    }
   }
-  output << "0]\n"; 
+  output << "]\n"; 
   return output.str(); 
 }
 
