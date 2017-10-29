@@ -31,11 +31,9 @@ var csgProcess = (function () {
 	importScripts('three/three.js');
 	importScripts('core/lodash.min.js') 
 
-	 // Pull server address here because no dom for sessionKeys 
-  importScripts("config.js"); 
+	// Pull server address here because no dom for sessionKeys 
+  importScripts("client_config.js"); 
 
-  SERVER_ADDRESS = SERVER_ADDRESS + ":" + SERVER_PORT;
-		
 	// ============================================================
 	// Generate three cube 
 	// ============================================================
@@ -131,7 +129,6 @@ var csgProcess = (function () {
 	// Post log results back from worker 
 	// =============================================================
 	var postLog = function(result) {
-		console.log( result ) 
 		postMessage( JSON.stringify({ type: 'log' , data: result }))
 	}
 
@@ -172,12 +169,14 @@ var csgProcess = (function () {
 		let socket = new WebSocket(SERVER_ADDRESS);
 
 		socket.onopen = function() { 
+			console.log( script ) 
 			socket.send(  JSON.stringify({ 'type': 'OPENSCAD' , 'data' : script}) ) 
 			socket.onmessage = function(event) {
 				let message = JSON.parse(event['data']) 
 				if ( message['type'] === 'OPENSCADRES' ) { postResult(message['data']); socket.close();  }
 				if ( message['type'] === 'OPENSCADLOG' ) { postLog(message['data'])    									 }
 				if ( message['type'] === 'PULSE'       ) { pulse();                    									 }
+				if ( message['type'] === 'NEXT'        ) { console.log( "next!");                        }
 			} 
 		}; 
 

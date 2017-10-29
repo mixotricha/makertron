@@ -8,12 +8,12 @@
     "start": "node makertron_server.js"
   },
   "dependencies": {
+		"ip"          : "^*",
 		"file-system" : "^*",
 		"lodash" : "^*",
 		"ref" : "^*",
 		"ref-array" : "^*",
 		"ref-struct" : "^*",
-		"tiny-worker": "^*",
 		"cradle": "^*",
     "express": "^*",
 		"jquery": "^*",
