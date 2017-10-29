@@ -1,1 +1,0 @@
-s!^\#\#\#\# [^|]* | *aarch64-unknown-linux-gnu *$!\#\#\#\# ...... aarch64-unknown-linux-gnu!
