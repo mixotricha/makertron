@@ -17,7 +17,7 @@
 		"cradle": "^*",
     "express": "^*",
 		"jquery": "^*",
-	   "ffi": "^*",
+	   "ffi": "file:node-ffi",
     "fs": "^*",
     "https": "^*",
     "net": "^*",
