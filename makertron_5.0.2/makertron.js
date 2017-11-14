@@ -36,93 +36,119 @@ const child_process = require('child_process');
 
 let VERSION        = "5.0.2"
 let SLAVE 				 = true 
-let SLAVE_PORT    = "3000"
-let SLAVES         = ['localhost', '192.168.1.193']
-let MASTER         = true
-let MASTER_PORT    = "8080"  	
-let MAX_CONN       = 4
+let SLAVE_PORT     = 3001
+
+let SLAVES         = [ 'localhost:3001' ]
+
+let MASTER         =  false
+let MASTER_PORT    = "80"  	
+let MAX_CONN       = 3
 let connections = 0; 
 
 // Find out which slave machines are available to process a request
 let available = function(i , callback ) { 
-	let socket = new WebSocket('ws://'+SLAVES[i]+':'+SLAVE_PORT); 
-	socket.on('error', (e)=> {
-		socket.close()
-		callback( null , null );  
-	})
+	let socket = new WebSocket('ws://'+SLAVES[i]); 
 	socket.on('open', ()=> {
 		socket.send( JSON.stringify( { type: 'AVAILABLE' }) ) 
 		socket.on  ( 'message' , (str) => {
 			let message = JSON.parse(str) 
 			if ( message['type'] === 'ADDR' ) {	
 				let data = message['data']; 
-				if ( data !== null ) { callback(null,data) } else { callback(null,null) }  
+				if ( data !== null ) { callback(null,SLAVES[i]) } else { callback(null,null) }  
 				socket.close()
 			}
 		})
-	}); 
+		socket.on( 'error' , (e) => {
+			socket.close()
+			callback( "Socket Failure: "+e , null ) 
+		})
+	})
+	socket.on( 'error' , (e) => {
+		socket.close()
+		callback( "Socket Failure: "+e , null ) 		
+	})
+
+
 }
 
 // Machine the master runs on can also serve slaves  
 let slave = (function () {
 	if ( SLAVE === true ) { 
-		log.info( "Makertron Starting slave Version: " + VERSION );
-		const wss = new WebSocket.Server({ port: SLAVE_PORT });
-			wss.on('connection', function connection(socket) {
+		log.info( "Makertron Starting slave Version: " + VERSION + " On Port " + SLAVE_PORT );
+		let wss = new WebSocket.Server({ port: SLAVE_PORT });
+		wss.on('connection', function connection(socket) {
+			
+		 
+				
+				//let heartBeat = setInterval(() => { 
+				//		if ( socket.readyState === socket.OPEN ) { socket.send('{"type":"PING","data":""}');  } 
+				//}, 5000);
+				
 				socket.on('message', (str) => { 
 					let message = JSON.parse(str);  
 					if ( message['type'] === 'AVAILABLE' ) { 
 						if ( connections < MAX_CONN ) { 
-							socket.send( JSON.stringify({ type: 'ADDR' ,  data: 'ws://'+ip.address()+':'+SLAVE_PORT }));
+							socket.send( JSON.stringify({ type: 'ADDR' ,  data: true }));
 						}
 						else { 
 							socket.send( JSON.stringify({ type: 'ADDR' ,  data: null }));
 						}
 					}
 					if ( message['type'] === 'OPENSCAD' ) { 
-						connections++; 
+						connections++;
 						let forked = child_process.fork('./process_scad.js');
-						let heartBeat = setInterval(() => { socket.send('{"type":"PULSE","data":""}'); }, 25000);
 						forked.send(JSON.stringify({result: message['data']}))
 						forked.on('message', (data) => { 
 							data = JSON.parse(data); 
 							if ( data['type'] === "log"     ) { socket.send(JSON.stringify({ type: 'OPENSCADLOG' ,  data: data['data']}));                 }
-							if ( data['type'] === "objects" ) { socket.send(JSON.stringify({ type: 'OPENSCADRES' ,  data: data['data']})); socket.close(); }
+							if ( data['type'] === "objects" ) { 
+								socket.send(JSON.stringify({ type: 'OPENSCADRES' ,  data: data['data']})); 
+								forked.kill(); 
+								connections--;	
+								socket.close(); 
+							}
 						});
-						socket.on('close', ()=>{
-							log.info("Socket closed");  
-							clearInterval(heartBeat); 
-							forked.kill(); 
-							connections--;
-						})
 					}
 				}) 
-		});
-	}
+			
+
+			socket.on('close', ()=>{
+				log.info("Socket closed");  
+				//clearInterval(heartBeat); 
+			})
+
+			socket.on('error', ()=>{
+					log.info("Socket Error");  
+			})
+ 
+		
+	});
+}
 }());
 
 // Serve the front end 
 let makertron_client = (function () {
+		
 	if ( MASTER === true ) { 
 		app.listen(MASTER_PORT,function(){
 			log.info('Client being served on port: ',MASTER_PORT);
 		});
 		app.use('/', express.static(__dirname));
 		app.get("/js/client_config.js", function(req, res) {	// give the client the next available slave 								  
-			async.parallel([
-					available.bind(null,0), 
-	 				available.bind(null,1) 
-				], function(err,nodes) { 
-					for ( let i = 0; i < nodes.length; i++ ) { 
-						if ( err !== null ) { 
-							log.info( err ) 
-						}
-						else {  
+			let avails = [] 
+			for ( let i = 0; i < SLAVES.length; i++ ) { avails.push(available.bind(null,i)) }
+			async.parallel( avails , function(err,nodes) { 					
+					if ( err !== null ) { 
+							log.info( "Error: ", err ) 
+							res.send(err); 
+					}
+					else { 
+						for ( let i = 0; i < nodes.length; i++ ) {   
 							if ( nodes[i]!==null) { 
-								log.info("Handing out to " + nodes[i] )
+								log.info("Handing out to " )
 								let config = '' 
 								config+= 'VERSION = "'+VERSION+'"\n'
-								config+= 'SERVER_ADDRESS = "'+nodes[i]+'"\n'  
+								config+= 'SERVER_ADDRESS = "ws://'+nodes[i]+'"\n'  
 								res.send(config); 
 								break; 
 							}  
@@ -132,6 +158,5 @@ let makertron_client = (function () {
 	 	});
 	}
 }());
-
 
 
