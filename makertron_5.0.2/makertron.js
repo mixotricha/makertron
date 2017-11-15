@@ -28,6 +28,7 @@
 
 const VERSION        = "5.0.2"
 
+const fs = require("fs"); 
 const ip = require("ip");
 const async = require('async'); 
 const express = require('express');
@@ -41,8 +42,8 @@ let config = JSON.parse(fs.readFileSync('config.jsn', 'utf8'));
 const SLAVE 				 = config['SLAVE'] 
 const SLAVE_PORT     = config['SLAVE_PORT']
 const SLAVES         = config['SLAVES'] 
-const MASTER         = config[['MASTER'] 
-const MASTER_PORT    = config[['MASTER_PORT']  	
+const MASTER         = config['MASTER'] 
+const MASTER_PORT    = config['MASTER_PORT']  	
 const MAX_CONN       = config['MAX_CONN']
 
 let connections = 0; 
@@ -119,7 +120,7 @@ let slave = (function () {
 
 
 // restart server 
-fs.watchFile('restart', (curr, prev) => { process.exit(); });
+//fs.watchFile('restart', (curr, prev) => { process.exit(); });
 
 // Serve the front end 
 let makertron_client = (function () {
