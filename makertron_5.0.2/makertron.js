@@ -26,6 +26,8 @@
 /*jshint -W069 */
 /*jslint node: true */
 
+const VERSION        = "5.0.2"
+
 const ip = require("ip");
 const async = require('async'); 
 const express = require('express');
@@ -34,15 +36,15 @@ const WebSocket = require('ws');
 const log = require('simple-node-logger').createSimpleLogger('project.log');
 const child_process = require('child_process');
 
-let VERSION        = "5.0.2"
-let SLAVE 				 = true 
-let SLAVE_PORT     = 3001
+let config = JSON.parse(fs.readFileSync('config.jsn', 'utf8'));
 
-let SLAVES         = [ 'localhost:3001' ]
+const SLAVE 				 = config['SLAVE'] 
+const SLAVE_PORT     = config['SLAVE_PORT']
+const SLAVES         = config['SLAVES'] 
+const MASTER         = config[['MASTER'] 
+const MASTER_PORT    = config[['MASTER_PORT']  	
+const MAX_CONN       = config['MAX_CONN']
 
-let MASTER         =  false
-let MASTER_PORT    = "80"  	
-let MAX_CONN       = 3
 let connections = 0; 
 
 // Find out which slave machines are available to process a request
@@ -67,8 +69,6 @@ let available = function(i , callback ) {
 		socket.close()
 		callback( "Socket Failure: "+e , null ) 		
 	})
-
-
 }
 
 // Machine the master runs on can also serve slaves  
@@ -77,13 +77,9 @@ let slave = (function () {
 		log.info( "Makertron Starting slave Version: " + VERSION + " On Port " + SLAVE_PORT );
 		let wss = new WebSocket.Server({ port: SLAVE_PORT });
 		wss.on('connection', function connection(socket) {
-			
-		 
-				
 				//let heartBeat = setInterval(() => { 
 				//		if ( socket.readyState === socket.OPEN ) { socket.send('{"type":"PING","data":""}');  } 
 				//}, 5000);
-				
 				socket.on('message', (str) => { 
 					let message = JSON.parse(str);  
 					if ( message['type'] === 'AVAILABLE' ) { 
@@ -110,21 +106,20 @@ let slave = (function () {
 						});
 					}
 				}) 
-			
-
 			socket.on('close', ()=>{
 				log.info("Socket closed");  
 				//clearInterval(heartBeat); 
 			})
-
 			socket.on('error', ()=>{
 					log.info("Socket Error");  
 			})
- 
-		
 	});
 }
 }());
+
+
+// restart server 
+fs.watchFile('restart', (curr, prev) => { process.exit(); });
 
 // Serve the front end 
 let makertron_client = (function () {
