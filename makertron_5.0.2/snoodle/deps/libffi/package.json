@@ -1,0 +1,70 @@
+{
+  "_from": "libffi",
+  "_id": "libffi@3.2.11",
+  "_inBundle": false,
+  "_integrity": "sha1-TR2U2srmxRHENOpQzF1i3cyXRh4=",
+  "_location": "/libffi",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "libffi",
+    "name": "libffi",
+    "escapedName": "libffi",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/libffi/-/libffi-3.2.11.tgz",
+  "_shasum": "4d1d94dacae6c511c434ea50cc5d62ddcc97461e",
+  "_spec": "libffi",
+  "_where": "makertron_5.0.1",
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/libffi/libffi/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "dependency-env": "git+https://github.com/npm-ml/dependency-env.git",
+    "nopam": "git+https://github.com/yunxing/nopam.git"
+  },
+  "deprecated": false,
+  "description": "Status ======",
+  "exportedEnvVars": {
+    "LIBFFI_BUILD_DIR": {
+      "global": true,
+      "resolveAsRelativePath": true,
+      "val": "./_build/"
+    },
+    "LIBFFI_CFLAGS": {
+      "global": true,
+      "val": "-I$LIBFFI_BUILD_DIR/lib/libffi-3.2.1/include"
+    },
+    "LIBFFI_LIBS": {
+      "global": true,
+      "val": "-L$LIBFFI_BUILD_DIR/lib -lffi"
+    },
+    "LIBRARY_PATH": {
+      "global": true,
+      "resolveAsRelativePath": true,
+      "globalCollisionBehavior": "joinPath",
+      "val": "./_build/lib"
+    }
+  },
+  "homepage": "https://github.com/libffi/libffi#readme",
+  "keywords": [],
+  "license": "ISC",
+  "name": "libffi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/libffi/libffi.git"
+  },
+  "scripts": {
+    "postinstall": "mkdir -p _build/lib64 _build/lib && ./configure --enable-shared=no --with-pic --prefix $(pwd)/_build && make && make install && cp -rf _build/lib64/. _build/lib"
+  },
+  "version": "3.2.11"
+}
