@@ -3,31 +3,31 @@
 	# aarch64 node-ffi using aarch64 on Khadas Vim 
 	# ----------------------------------------------
 
-	apt update -y 
-	apt upgrade -y 
+	sudo apt update -y 
+	sudo apt upgrade -y 
   
-  apt-get install texinfo
-  apt install libtool 
+	sudo apt install texinfo
+	sudo apt install libtool 
 
-	apt-get -y install libcgal-dev
-	apt-get -y install libeigen3-dev
-	apt-get -y install libboost-all-dev
+	sudo apt -y install libcgal-dev
+	sudo apt -y install libeigen3-dev
+	sudo apt -y install libboost-all-dev
 
-	apt install doxygen 
-	apt install freetype*
-	apt install libfreetype*
-	apt-get install tk tcl
-	apt-get install tk8.5-dev tcl8.5-dev
-	apt install libgl-dev
-	apt install libxmu-dev
-	apt install libxi-dev
+	sudo apt -y install doxygen 
+	sudo apt -y install freetype*
+	sudo apt -y install libfreetype*
+	sudo apt -y install tk tcl
+	sudo apt -y install tk8.5-dev tcl8.5-dev
+	sudo apt -y install libgl-dev
+	sudo apt -y install libxmu-dev
+	sudo apt -y install libxi-dev
 
 	# Some sort of random nonsense involving perl. 
-	apt-get -y install locales
-	locale-gen en_AU.UTF-8
+	sudo apt -y install locales
+	sudo locale-gen en_AU.UTF-8
 	
 	# More -garbage- involving locale + perl 
-	ln -s /usr/include/locale.h /usr/include/xlocale.h
+	sudo ln -s /usr/include/locale.h /usr/include/xlocale.h
 
 	# -------------------------
 	# Patch and build node-ffi  
