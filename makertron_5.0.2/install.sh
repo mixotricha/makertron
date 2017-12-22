@@ -6,8 +6,8 @@
 	sudo apt update -y 
 	sudo apt upgrade -y 
   
-	sudo apt install texinfo
-	sudo apt install libtool 
+	sudo apt -y install texinfo
+	sudo apt -y install libtool 
 
 	sudo apt -y install libcgal-dev
 	sudo apt -y install libeigen3-dev
@@ -21,6 +21,8 @@
 	sudo apt -y install libgl-dev
 	sudo apt -y install libxmu-dev
 	sudo apt -y install libxi-dev
+	sudo apt -y install autoconf 
+	sudo apt -y install cmake 
 
 	# Some sort of random nonsense involving perl. 
 	sudo apt -y install locales
@@ -59,6 +61,7 @@
   cp ../../../aarch64-unknown-linux-gnu/fficonfig.h . 
   cp ../../../src/aarch64/ffitarget.h . 
   patch < ffi.diff 
+
   #cd .. 
   #mkdir x64 
 	#cd x64 
@@ -67,23 +70,23 @@
 	#cp ../../../x86_64-pc-linux-gnu/fficonfig.h .   
   #cp ../../../src/x86/ffitarget.h .
   #patch < ffi2.diff 
-  cd ../../../../../
+
+
+  cd ../../../../../../../
+	npm update
+	mv node-ffi node_modules 
+	cd node_modes/node-ffi 
   node-gyp rebuild 
-	cd .. 
-	move node-ffi node_modules 
 
-	cd brep_shared_lib 
-	cd oce 
-	tar -zxvf xxx.xxx.tgz 
-	cd xxx.xxx.xxx 
-	cmake . 
-	make 
-	cp lin64/gcc/lib/* /usr/lib/. 
-
-	cd ../.. 
-	make
-	cp brep.so ../. 
-	cd .. 
-	npm update 
+	#cd ../../brep_shared_lib 
+	#tar -zxvf opencascade-7.1.0.tgz 
+	#cd opencascade-7.1.0 
+	#cmake . 
+	#make 
+	#cp lin64/gcc/lib/* /usr/lib/. 
+	#cd .. 
+	#make  
+	
+	
 
 	
