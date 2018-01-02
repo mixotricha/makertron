@@ -5,6 +5,8 @@
 
 	#!/bin/bash
 
+	cd makertron_5.0.3 
+	
 	MAKERTRON_TARGET=("X86" "ARM")
 
 	MAKERTRON_TARGET_LEN=${#MAKERTRON_TARGET[@]}
