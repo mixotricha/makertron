@@ -1,0 +1,14 @@
+{
+	"VERSION"        : "5.0.3", 
+	"SLAVE" 				 : true, 
+	"SLAVE_ADDR"     : "makertron.io", 
+	"SLAVE_PORT"     : 3000,
+	"RELAY_ADDR"     : "",
+	"RELAY_PORT"     : "", 
+	"MASTER"         :  true,
+	"MASTER_PORT"    : "80",  	
+	"MAX_CONN"       : 30 , 
+	"HTTPS"          : false , 
+        "HSKEY"          : "",  
+        "HSCERT"         : ""
+}

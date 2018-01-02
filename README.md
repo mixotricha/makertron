@@ -3,47 +3,77 @@
 
 The Makertron is a constructive solids engine that aims to fill the gap between traditional 'UI' driven cad tools and specification driven manufacturing environments. 
 
+It features a decoupled philosophy and is designed to scale across hardware. 
 
-It features a decoupled philosophy. Everything now exists in a single docker container but you can select if you want the client or the server or both to run in the same container. This opens the door to having multiple servers in a cluster working on CSG geometry at the same time. 
 
 The constructive geometry server portion of the makertron deals in stacks of geometrical operations and the client server deals with the complex business of parsing and managing user interaction. 
 
-This is in sharp contrast to the OpenSCAD project design where the interface and geometry engine are tightly coupled and issues of speed and scale are readily apparent and non trivial to solve. The Makertron aims to be OpenSCAD compatible while fixing some ambiguities in the OpenSCAD language itself and shifting the parsing of the language to what we deem to be a more 'solid' parsing core through the addition of a transpiler. This will result in better error checking and more flexibility in the language without significant parser development overhead. 
+This is in sharp contrast to the OpenSCAD project design where the interface and geometry engine are tightly coupled and issues of speed and scale are readily apparent and non trivial to solve. 
+
+The Makertron aims to be OpenSCAD compatible while fixing some ambiguities in the OpenSCAD language itself and shifting the parsing of the language to what we deem to be a more 'solid' parsing core through the addition of a transpiler. 
+
+This will result in better error checking and more flexibility in the language without significant parser development overhead.
+
+![Screenshot](makertron.jpg)
 
 <h2>Demonstration</h2>
 
-<a href="http://makertron.io">makertron.io</a>
+You can play with the live demo <a href="http://makertron.io">makertron.io</a> 
 
 <h2>How Do I Build It Stand Alone</h2>
 
-All of the core components are currently in a Docker image and docker will be required for its execution. 
+0. The makertron client server does not support Windows. 
 
-As an alternative you can play with the live demo <a href="http://makertron.io">makertron.io</a>
+1. You will need to install both CGAL and OpenCascade. 
 
-For <a href="https://docs.docker.com/toolbox/toolbox_install_windows/">W7</a>  
+	1. Download  <a href="https://www.opencascade.com/content/open-cascade-technology-710-available-download-0">OpenCascade 7.1.0</a>. Follow configuration and build instructions and make sure library is installed in a location searchable by path. 
 
-For All <a href="https://docs.docker.com/engine/installation/">Linux/OSX/W8/W10/Others</a>
+	2. For Ubuntu sudo apt-get install libcgal-dev
 
-<h3>To install the Combined Server/Client</h3> 
+2. git clone https://github.com/mixotricha/makertron 
 
-The following instructions assume docker is installed. 
+3. cd makertron 
 
-Edit following files and change port settings as approriate. You will need a port for both the client and server. The defaults are port 8080 for the client and port 3000 for the server. 
+4. Edit the config.jsn 
 
-makertron/DockerFile 
+{
+	"VERSION"        : "5.0.3", 
+	"SLAVE" 				 : true, 
+	"SLAVE_ADDR"     : "makertron.io", 
+	"SLAVE_PORT"     : 3000,
+	"RELAY_ADDR"     : "",
+	"RELAY_PORT"     : "", 
+	"MASTER"         : true,
+	"MASTER_PORT"    : "80",  	
+	"MAX_CONN"       : 30 , 
+	"HTTPS"          : false , 
+  "HSKEY"          : "",  
+  "HSCERT"         : ""
+}
 
-makertron/config.js 
 
-makertron/start_makertron.sh 
+VERSION     - Version Number.  
+SLAVE       - This node will serve geometry ( true ). 
+SLAVE_ADDR  - Address of this node ( include regardless of if SLAVE === true ). Same address as client server if not clustering.  
+SLAVE_PORT  - Port of slave ( include regardless of if SLAVE === true and must be open and accessible ). 
+RELAY_ADDR  - Address of next node. Leave blank if running single node stand alone.
+RELAY_PORT  - Port of next node. Must be different from SLAVE_PORT. Leave blank if running stand alone. 
+MASTER      - If this node intends to serve the client front end ( true ).  
+MASTER_PORT - Port that client front end will be served on. Typically port 80 or 443.  
+MAX_CONN    - How many connections this node will support before forwarding to next node.     
+HTTPS       - If the front end will be served with certificate 
+HSKEY       - Path to key ( do not include in subdir of client ! ).  
+HSCERT      - Path to certificate ( do not include in subdir of client ! ).  
 
 
-1. git clone https://github.com/mixotricha/makertron
-2. cd makertron 
-3. ./build_makertron.sh
-4. ./start_makertron.sh
-4. browser go to localhost:xxxxx 
+5. cd in to the makertron_5.0.3 directory. 
 
-5. ./stop_makertron.sh to stop the makertron 
+6. ./install.sh 
+
+7. Launch the makertron.js server.
+	node makertron.js 
+
+8. Repeat this configuration and installation process for each physical hardware node that you intend to serve geometry. 
 
 <h2>Support Matrix</h2> 
 

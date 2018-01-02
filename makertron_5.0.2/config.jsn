@@ -1,8 +1,0 @@
-{
-	"SLAVE" 				 : true, 
-	"SLAVE_PORT"     : 3000,
-	"SLAVES"         : [ "makertron.io:3000" ],
-	"MASTER"         :  true,
-	"MASTER_PORT"    : "8080",  	
-	"MAX_CONN"       : 3
-}
