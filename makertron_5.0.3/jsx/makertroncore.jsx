@@ -168,7 +168,7 @@
 	class Start extends React.Component {
 		constructor(props) {
     	super(props);
-    	this.state = { result: [] , log: "" , text: "" , component: false , connected : false };
+    	this.state = { resultObjs: [] , log: "" , text: "" , component: false , connected : false };
 			this.updateScene = this.updateScene.bind(this);
 			this.handleDrag = this.handleDrag.bind(this)	
 			this.updateDimensions = this.updateDimensions.bind(this) 
@@ -185,47 +185,61 @@
 			$("#gearstart").css('opacity'  ,   0)
 			$("#gearstop").css('opacity'   ,   1)			
 		}
- 		updateScene(result,text) {
-			this.progressOn()
-			this.setState({ connected: true  })	
-			let myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
-			myWorker.postMessage( result );
-			myWorker.onmessage = (e)=> { 
-				let data = JSON.parse(e['data']) 
-				if ( data['type'] === "result" ) {
-					this.setState({ result: data['data'] })
-				}	
-				if ( data['type'] === "log" ) {
-					//let out = ""
-					//let rows = JSON.parse(data['data'])
-					//if ( rows['0'] !== undefined ) out+= rows['0']	 					
-					this.updateLog(data['data']+"\n")
-				}
-				if ( data['type'] === "pulse" ) { 
-					if ( this.state.connected === true ) { 
-						this.progressOn()
+
+		
+
+ 		updateScene(results) {
+
+			let worker = (result) => { 
+				this.progressOn()
+				this.setState({ connected: true  })	
+				let myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
+				myWorker.postMessage( result );				
+				myWorker.onmessage = (e)=> { 
+					let data = JSON.parse(e['data']) 
+					if ( data['type'] === "result" ) {
+						this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
+					}	
+					if ( data['type'] === "log" ) {
+						//let out = ""
+						//let rows = JSON.parse(data['data'])
+						//if ( rows['0'] !== undefined ) out+= rows['0']	 					
+						//this.updateLog(data['data']+"\n")
 					}
-					else { 
-						this.progressStop()	
+					if ( data['type'] === "pulse" ) { 
+						if ( this.state.connected === true ) { 
+							this.progressOn()
+						}
+						else { 
+							this.progressStop()	
+						}
+					}
+					if ( data['type'] === "close" ) { 
+						this.setState({ connected: false  })	
+						this.progressStop()
+					}
+					if ( data['type'] === "error" ) { 
+						this.updateLog(data['data']) 
+						this.progressOff()
 					}
 				}
-				if ( data['type'] === "close" ) { 
-					this.setState({ connected: false  })	
-					this.progressStop()
-				}
-				if ( data['type'] === "error" ) { 
-					this.updateLog(data['data']) 
-					this.progressOff()
-				}
+			
+			}	
+
+			for ( let i = 0; i < results.length; i++ ) { 	
+				worker(results[i]) 
 			}			 
 		}
+
 		updateLog(string) { 
 			var txt = this.state.log+=string
 			this.setState({ log   : txt })
 		}
+
 		handleDrag(event) {
 		//	this.setState({ component: true  })	  
 		} 
+
 		tools() { 
 			return (<Tools patronus={this}/>)
 		} 
@@ -241,14 +255,18 @@
 			return (<ConsoleComponent patronus={this} data={this.state.log} />)		
 		}
 		viewer() { 	 
-			return (<ThreeComponent patronus={this} data={this.state.result} />)		
+			return (<ThreeComponent patronus={this} data={this.state.resultObjs} />)		
 		}
 		Login() { 
 			return(<Login />)
 		}
+
+		// update our viewer dimensions 
 		updateDimensions() { 
 			this.setState({component:true})
 		}
+
+		// Load our default model on component being mounted 
 		componentWillMount() { 
 			if ( sessionStorage.text === undefined ) {
 				$.get( "pipe.scad", ( data ) => { 
@@ -257,20 +275,30 @@
 				});
 			} 			 
 		}
+
+		// We did mount the component. Disable things like context menus from the viewer
 		componentDidMount() {
 			window.addEventListener("resize", this.updateDimensions);
 			$('#mainview').on("contextmenu",()=>{return false;}); 
 		}
+
   	componentWillUnmount() {
 		}
+
+		// Something in our state changed now update	
 		componentDidUpdate() {  
 			this.viewer()
 			this.editor()  
 			this.console() 
 		}
-
+	
+		// On a change of state decide if we do a componentDidUpdate or not 
 		shouldComponentUpdate( nextProps , nextState ) { 
-			if (  nextState.result !== this.state.result || nextState.text !== this.state.text ) { return true; } 
+
+			console.log( nextState.resultObjs ) 
+			console.log( this.state.resultObjs ) 
+ 
+			if (  nextState.resultObjs !== this.state.resultObjs || nextState.text !== this.state.text ) { return true; } 
 			return false;  
 		}
 

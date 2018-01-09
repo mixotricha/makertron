@@ -31,6 +31,7 @@
 	const ArrayType = require('ref-array');
 	const StructType = require('ref-struct');
 	const ffi = require("ffi");
+	//const ffi = require("node-ffi")
 	const fs = require('fs'); 
 
 	const ProcessScad = function(result) { 

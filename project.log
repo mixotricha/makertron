@@ -1,0 +1,487 @@
+16:50:42.277 INFO  Total Cores: 2 
+16:50:42.277 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+16:50:42.347 INFO  Http client being served on port: 8080 
+16:56:24.341 INFO  Total Cores: 2 
+16:56:24.342 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+16:56:24.402 INFO  Http client being served on port: 8080 
+16:58:18.346 INFO  Client Connecting 
+16:58:18.352 INFO  Processing Openscad Script On: 1 
+16:58:19.436 INFO  CPU Usage: 76.43979057591623 
+16:59:22.788 INFO  Total Cores: 2 
+16:59:22.789 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+16:59:22.826 INFO  Http client being served on port: 8080 
+17:00:05.943 INFO  Client Connecting 
+17:00:05.954 INFO  Processing Openscad Script On: 1 
+17:00:07.004 INFO  CPU Usage: 58.75706214689266 
+17:01:50.399 INFO  Client Connecting 
+17:01:50.415 INFO  Processing Openscad Script On: 2 
+17:01:51.425 INFO  CPU Usage: 55.80110497237569 
+17:06:08.806 INFO  Total Cores: 2 
+17:06:08.807 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+17:06:08.836 INFO  Http client being served on port: 8080 
+17:06:18.295 INFO  Client Connecting 
+17:06:18.332 INFO  Processing Openscad Script On: 1 
+17:06:19.348 INFO  CPU Usage: 57.692307692307686 
+17:09:40.997 INFO  Socket closed 
+17:09:48.580 INFO  Client Connecting 
+17:09:48.599 INFO  Processing Openscad Script On: 2 
+17:09:49.610 INFO  CPU Usage: 59.34065934065934 
+18:00:26.561 INFO  Total Cores: 2 
+18:00:26.561 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+18:00:26.588 INFO  Http client being served on port: 8080 
+18:00:36.197 INFO  Client Connecting 
+18:00:36.227 INFO  Processing Openscad Script On: 1 
+18:00:37.244 INFO  CPU Usage: 58.06451612903226 
+18:15:29.520 INFO  Socket closed 
+22:40:28.660 INFO  Total Cores: 2 
+22:40:28.660 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:40:28.691 INFO  Http client being served on port: 8080 
+22:49:39.925 INFO  Total Cores: 2 
+22:49:39.925 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:49:39.954 INFO  Http client being served on port: 8080 
+22:56:56.112 INFO  Total Cores: 2 
+22:56:56.112 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:56:56.139 INFO  Http client being served on port: 8080 
+23:02:34.149 INFO  Total Cores: 2 
+23:02:34.150 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:02:34.176 INFO  Http client being served on port: 8080 
+23:10:39.204 INFO  Total Cores: 2 
+23:10:39.204 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:10:39.231 INFO  Http client being served on port: 8080 
+23:14:26.109 INFO  Total Cores: 2 
+23:14:26.109 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:14:26.136 INFO  Http client being served on port: 8080 
+23:18:33.620 INFO  Total Cores: 2 
+23:18:33.621 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:18:33.648 INFO  Http client being served on port: 8080 
+23:20:34.293 INFO  Total Cores: 2 
+23:20:34.293 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:20:34.321 INFO  Http client being served on port: 8080 
+23:24:47.769 INFO  Total Cores: 2 
+23:24:47.770 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:24:47.796 INFO  Http client being served on port: 8080 
+23:26:34.095 INFO  Total Cores: 2 
+23:26:34.095 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:26:34.122 INFO  Http client being served on port: 8080 
+23:27:47.693 INFO  Total Cores: 2 
+23:27:47.693 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:27:47.720 INFO  Http client being served on port: 8080 
+23:37:14.380 INFO  Total Cores: 2 
+23:37:14.380 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:37:14.407 INFO  Http client being served on port: 8080 
+23:40:30.752 INFO  Total Cores: 2 
+23:40:30.753 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:40:30.780 INFO  Http client being served on port: 8080 
+23:42:04.035 INFO  Total Cores: 2 
+23:42:04.035 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:42:04.062 INFO  Http client being served on port: 8080 
+23:47:04.055 INFO  Total Cores: 2 
+23:47:04.055 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:47:04.083 INFO  Http client being served on port: 8080 
+12:10:48.031 INFO  Total Cores: 2 
+12:10:48.032 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:10:48.090 INFO  Http client being served on port: 8080 
+12:13:06.529 INFO  Total Cores: 2 
+12:13:06.529 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:13:06.555 INFO  Http client being served on port: 8080 
+12:16:03.625 INFO  Total Cores: 2 
+12:16:03.626 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:16:03.653 INFO  Http client being served on port: 8080 
+12:21:01.766 INFO  Total Cores: 2 
+12:21:01.766 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:21:01.794 INFO  Http client being served on port: 8080 
+12:22:35.174 INFO  Total Cores: 2 
+12:22:35.174 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:22:35.201 INFO  Http client being served on port: 8080 
+14:45:10.193 INFO  Total Cores: 2 
+14:45:10.193 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+14:45:10.271 INFO  Http client being served on port: 8080 
+14:47:31.797 INFO  Total Cores: 2 
+14:47:31.798 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+14:47:31.844 INFO  Http client being served on port: 8080 
+15:00:40.533 INFO  Total Cores: 2 
+15:00:40.534 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:00:40.570 INFO  Http client being served on port: 8080 
+15:02:12.717 INFO  Total Cores: 2 
+15:02:12.718 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:02:12.754 INFO  Http client being served on port: 8080 
+15:02:24.397 INFO  Client Connecting 
+15:02:24.439 INFO  Processing Openscad Script On: 1 
+15:02:25.549 INFO  CPU Usage: 97.81420765027322 
+15:18:09.831 INFO  Total Cores: 2 
+15:18:09.831 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:18:09.864 INFO  Http client being served on port: 8080 
+15:18:25.135 INFO  Client Connecting 
+15:18:25.142 INFO  Processing Openscad Script On: 1 
+15:18:26.189 INFO  CPU Usage: 65.80310880829016 
+15:23:59.598 INFO  Total Cores: 2 
+15:23:59.598 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:23:59.628 INFO  Http client being served on port: 8080 
+15:24:08.904 INFO  Client Connecting 
+15:24:08.953 INFO  Processing Openscad Script On: 1 
+15:24:09.974 INFO  CPU Usage: 80.52631578947368 
+15:27:50.205 INFO  Total Cores: 2 
+15:27:50.206 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:27:50.235 INFO  Http client being served on port: 8080 
+15:28:05.115 INFO  Client Connecting 
+15:28:05.139 INFO  Processing Openscad Script On: 1 
+15:28:06.157 INFO  CPU Usage: 81.08108108108108 
+15:30:21.851 INFO  Total Cores: 2 
+15:30:21.851 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:30:21.886 INFO  Http client being served on port: 8080 
+15:32:01.086 INFO  Total Cores: 2 
+15:32:01.086 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:32:01.116 INFO  Http client being served on port: 8080 
+15:33:51.168 INFO  Total Cores: 2 
+15:33:51.169 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:33:51.196 INFO  Http client being served on port: 8080 
+15:34:00.532 INFO  Client Connecting 
+15:34:00.562 INFO  Processing Openscad Script On: 1 
+15:34:01.584 INFO  CPU Usage: 83.24324324324324 
+15:42:58.346 INFO  Total Cores: 2 
+15:42:58.346 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:42:58.375 INFO  Http client being served on port: 8080 
+15:43:05.936 INFO  Client Connecting 
+15:43:05.942 INFO  Processing Openscad Script On: 1 
+15:43:06.969 INFO  CPU Usage: 64.28571428571429 
+15:44:40.226 INFO  Total Cores: 2 
+15:44:40.226 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:44:40.256 INFO  Http client being served on port: 8080 
+15:46:16.431 INFO  Total Cores: 2 
+15:46:16.431 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+15:46:16.458 INFO  Http client being served on port: 8080 
+15:46:23.646 INFO  Client Connecting 
+15:46:23.655 INFO  Processing Openscad Script On: 1 
+15:46:24.709 INFO  CPU Usage: 55.83756345177665 
+22:43:20.595 INFO  Total Cores: 2 
+22:43:20.596 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:43:20.643 INFO  Http client being served on port: 8080 
+22:45:32.762 INFO  Total Cores: 2 
+22:45:32.762 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:45:32.789 INFO  Http client being served on port: 8080 
+22:50:01.349 INFO  Total Cores: 2 
+22:50:01.349 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:50:01.385 INFO  Http client being served on port: 8080 
+22:51:37.362 INFO  Total Cores: 2 
+22:51:37.362 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:51:37.388 INFO  Http client being served on port: 8080 
+22:54:37.886 INFO  Total Cores: 2 
+22:54:37.886 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:54:37.913 INFO  Http client being served on port: 8080 
+22:57:43.881 INFO  Total Cores: 2 
+22:57:43.881 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:57:43.910 INFO  Http client being served on port: 8080 
+22:59:27.543 INFO  Total Cores: 2 
+22:59:27.543 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+22:59:27.580 INFO  Http client being served on port: 8080 
+07:32:16.403 INFO  Total Cores: 2 
+07:32:16.404 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+07:32:16.453 INFO  Http client being served on port: 8080 
+07:47:07.866 INFO  Total Cores: 2 
+07:47:07.866 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+07:47:07.900 INFO  Http client being served on port: 8080 
+09:34:18.549 INFO  Total Cores: 2 
+09:34:18.549 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:34:18.597 INFO  Http client being served on port: 8080 
+09:38:00.986 INFO  Total Cores: 2 
+09:38:00.986 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:38:01.022 INFO  Http client being served on port: 8080 
+09:39:25.915 INFO  Total Cores: 2 
+09:39:25.915 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:39:25.963 INFO  Http client being served on port: 8080 
+09:42:06.703 INFO  Total Cores: 2 
+09:42:06.703 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:42:06.734 INFO  Http client being served on port: 8080 
+09:46:16.935 INFO  Total Cores: 2 
+09:46:16.935 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:46:16.966 INFO  Http client being served on port: 8080 
+12:30:58.044 INFO  Total Cores: 2 
+12:30:58.044 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:30:58.104 INFO  Http client being served on port: 8080 
+12:32:59.162 INFO  Total Cores: 2 
+12:32:59.162 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:32:59.191 INFO  Http client being served on port: 8080 
+12:37:25.168 INFO  Total Cores: 2 
+12:37:25.168 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:37:25.214 INFO  Http client being served on port: 8080 
+12:38:53.766 INFO  Total Cores: 2 
+12:38:53.767 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:38:53.796 INFO  Http client being served on port: 8080 
+12:40:19.887 INFO  Total Cores: 2 
+12:40:19.888 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:40:19.915 INFO  Http client being served on port: 8080 
+12:52:02.750 INFO  Total Cores: 2 
+12:52:02.751 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:52:02.781 INFO  Http client being served on port: 8080 
+12:55:21.896 INFO  Total Cores: 2 
+12:55:21.897 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:55:21.927 INFO  Http client being served on port: 8080 
+12:57:05.377 INFO  Total Cores: 2 
+12:57:05.377 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:57:05.405 INFO  Http client being served on port: 8080 
+13:08:30.576 INFO  Total Cores: 2 
+13:08:30.576 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:08:30.605 INFO  Http client being served on port: 8080 
+13:11:53.528 INFO  Total Cores: 2 
+13:11:53.528 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:11:53.555 INFO  Http client being served on port: 8080 
+13:14:03.819 INFO  Total Cores: 2 
+13:14:03.819 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:14:03.848 INFO  Http client being served on port: 8080 
+13:16:02.216 INFO  Total Cores: 2 
+13:16:02.216 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:16:02.256 INFO  Http client being served on port: 8080 
+13:16:12.246 INFO  Client Connecting 
+13:16:12.290 INFO  Processing Openscad Script On: 1 
+13:16:12.385 INFO  Client Connecting 
+13:16:12.392 INFO  Processing Openscad Script On: 2 
+13:16:13.358 INFO  CPU Usage: 88.27160493827161 
+13:16:13.409 INFO  CPU Usage: 86.79245283018868 
+13:22:57.205 INFO  Total Cores: 2 
+13:22:57.206 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:22:57.232 INFO  Http client being served on port: 8080 
+13:23:08.119 INFO  Client Connecting 
+13:23:08.127 INFO  Processing Openscad Script On: 1 
+13:23:08.232 INFO  Client Connecting 
+13:23:08.239 INFO  Processing Openscad Script On: 2 
+13:23:09.173 INFO  CPU Usage: 78.06122448979592 
+13:23:09.280 INFO  CPU Usage: 73.46938775510205 
+13:24:52.935 INFO  Total Cores: 2 
+13:24:52.935 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:24:52.998 INFO  Http client being served on port: 8080 
+13:25:03.426 INFO  Client Connecting 
+13:25:03.465 INFO  Processing Openscad Script On: 1 
+13:25:03.605 INFO  Client Connecting 
+13:25:03.610 INFO  Processing Openscad Script On: 2 
+13:25:04.537 INFO  CPU Usage: 92.73743016759776 
+13:25:04.635 INFO  CPU Usage: 91.875 
+13:48:01.002 INFO  Total Cores: 2 
+13:48:01.002 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:48:01.053 INFO  Http client being served on port: 8080 
+13:49:13.791 INFO  Total Cores: 2 
+13:49:13.791 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:49:13.819 INFO  Http client being served on port: 8080 
+13:49:29.200 INFO  Client Connecting 
+13:49:29.211 INFO  Processing Openscad Script On: 1 
+13:49:29.302 INFO  Client Connecting 
+13:49:29.327 INFO  Processing Openscad Script On: 2 
+13:49:30.269 INFO  CPU Usage: 90.625 
+13:49:30.341 INFO  CPU Usage: 85.86387434554975 
+13:53:57.805 INFO  Total Cores: 2 
+13:53:57.805 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+13:53:57.831 INFO  Http client being served on port: 8080 
+13:54:10.680 INFO  Client Connecting 
+13:54:10.724 INFO  Processing Openscad Script On: 1 
+13:54:11.178 INFO  Client Connecting 
+13:54:11.199 INFO  Processing Openscad Script On: 2 
+13:54:11.778 INFO  CPU Usage: 83.6734693877551 
+13:54:12.208 INFO  CPU Usage: 58.94736842105262 
+16:02:55.868 INFO  Total Cores: 2 
+16:02:55.869 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+16:02:55.923 INFO  Http client being served on port: 8080 
+16:03:38.223 INFO  Client Connecting 
+16:03:38.229 INFO  Processing Openscad Script On: 1 
+16:03:38.270 INFO  Client Connecting 
+16:03:38.277 INFO  Processing Openscad Script On: 2 
+16:03:39.266 INFO  CPU Usage: 65.07936507936508 
+16:03:39.284 INFO  CPU Usage: 64.73684210526316 
+17:25:53.631 INFO  Total Cores: 2 
+17:25:53.631 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+17:25:53.674 INFO  Http client being served on port: 8080 
+17:26:33.021 INFO  Client Connecting 
+17:26:33.037 INFO  Forwarding To Relay 
+17:26:33.146 INFO  Client Connecting 
+17:26:33.156 INFO  Forwarding To Relay 
+17:27:02.114 INFO  Relay Socket closed 
+17:27:02.159 INFO  Socket closed 
+17:27:13.038 INFO  Relay Socket closed 
+17:27:13.046 INFO  Socket closed 
+23:19:00.918 INFO  Total Cores: 2 
+23:19:00.918 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:19:00.983 INFO  Http client being served on port: 8080 
+23:19:10.817 INFO  Total Cores: 2 
+23:19:10.817 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:19:10.850 INFO  Http client being served on port: 8080 
+23:21:36.676 INFO  Total Cores: 2 
+23:21:36.676 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:21:36.703 INFO  Http client being served on port: 8080 
+23:21:45.142 INFO  Client Connecting 
+23:21:45.173 INFO  Client Connecting 
+23:21:45.193 INFO  Forwarding To Relay 
+23:21:45.230 INFO  Forwarding To Relay 
+23:21:49.739 INFO  Relay Socket closed 
+23:21:49.748 INFO  Socket closed 
+23:22:25.193 INFO  Relay Socket closed 
+23:22:25.197 INFO  Socket closed 
+23:25:36.606 INFO  Total Cores: 2 
+23:25:36.606 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+23:25:36.636 INFO  Http client being served on port: 8080 
+23:25:45.603 INFO  Client Connecting 
+23:25:45.608 INFO  Forwarding To Relay 
+23:25:45.629 INFO  Client Connecting 
+23:25:45.656 INFO  Forwarding To Relay 
+23:25:49.423 INFO  Relay Socket closed 
+23:25:49.439 INFO  Socket closed 
+23:26:25.046 INFO  Relay Socket closed 
+23:26:25.059 INFO  Socket closed 
+09:56:07.238 INFO  Total Cores: 2 
+09:56:07.238 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+09:56:07.293 INFO  Http client being served on port: 8080 
+09:56:39.349 INFO  Client Connecting 
+09:56:39.367 INFO  Forwarding To Relay 
+09:56:39.421 INFO  Relay Socket Error 
+09:56:39.428 INFO  Relay Socket closed 
+09:56:39.449 INFO  Client Connecting 
+09:56:39.451 INFO  Forwarding To Relay 
+09:56:39.491 INFO  Relay Socket Error 
+09:56:39.494 INFO  Relay Socket closed 
+09:56:39.513 INFO  Socket closed 
+09:56:39.529 INFO  Socket closed 
+10:00:14.479 INFO  Client Connecting 
+10:00:14.495 INFO  Forwarding To Relay 
+10:00:14.681 INFO  Client Connecting 
+10:00:14.693 INFO  Forwarding To Relay 
+10:00:19.501 INFO  Relay Socket closed 
+10:00:19.514 INFO  Socket closed 
+10:00:52.511 INFO  Relay Socket closed 
+10:00:52.515 INFO  Socket closed 
+10:36:22.110 INFO  Total Cores: 2 
+10:36:22.111 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+10:36:22.145 INFO  Http client being served on port: 8080 
+10:42:52.394 INFO  Client Connecting 
+10:42:52.415 INFO  Forwarding To Relay 
+10:42:52.553 INFO  Client Connecting 
+10:42:52.556 INFO  Forwarding To Relay 
+10:42:56.407 INFO  Relay Socket closed 
+10:42:56.416 INFO  Socket closed 
+10:43:31.783 INFO  Relay Socket closed 
+10:43:31.800 INFO  Socket closed 
+10:47:02.542 INFO  Total Cores: 2 
+10:47:02.542 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+10:47:02.575 INFO  Http client being served on port: 8080 
+10:47:15.137 INFO  Client Connecting 
+10:47:15.144 INFO  Forwarding To Relay 
+10:47:15.283 INFO  Client Connecting 
+10:47:15.303 INFO  Forwarding To Relay 
+10:47:20.089 INFO  Relay Socket closed 
+10:47:20.093 INFO  Socket closed 
+10:47:46.439 INFO  Relay Socket closed 
+10:47:46.459 INFO  Socket closed 
+10:52:30.430 INFO  Total Cores: 2 
+10:52:30.430 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+10:52:30.460 INFO  Http client being served on port: 8080 
+10:52:49.816 INFO  Client Connecting 
+10:52:49.890 INFO  Forwarding To Relay 
+10:52:49.944 INFO  Client Connecting 
+10:52:49.954 INFO  Forwarding To Relay 
+10:52:54.673 INFO  Relay Socket closed 
+10:52:54.686 INFO  Socket closed 
+10:53:20.968 INFO  Relay Socket closed 
+10:53:20.973 INFO  Socket closed 
+11:09:55.941 INFO  Total Cores: 2 
+11:09:55.942 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+11:09:55.969 INFO  Http client being served on port: 8080 
+11:10:05.879 INFO  Client Connecting 
+11:10:05.890 INFO  Forwarding To Relay 
+11:10:06.003 INFO  Client Connecting 
+11:10:06.032 INFO  Forwarding To Relay 
+11:10:09.902 INFO  Relay Socket closed 
+11:10:09.927 INFO  Socket closed 
+11:10:45.273 INFO  Relay Socket closed 
+11:10:45.277 INFO  Socket closed 
+11:14:59.078 INFO  Total Cores: 2 
+11:14:59.079 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+11:14:59.106 INFO  Http client being served on port: 8080 
+11:15:09.923 INFO  Client Connecting 
+11:15:09.994 INFO  Forwarding To Relay 
+11:15:10.076 INFO  Client Connecting 
+11:15:10.099 INFO  Forwarding To Relay 
+11:15:14.884 INFO  Relay Socket closed 
+11:15:14.888 INFO  Socket closed 
+11:15:40.998 INFO  Relay Socket closed 
+11:15:41.003 INFO  Socket closed 
+11:36:02.884 INFO  Client Connecting 
+11:36:02.900 INFO  Forwarding To Relay 
+11:36:03.004 INFO  Client Connecting 
+11:36:03.029 INFO  Forwarding To Relay 
+11:36:06.845 INFO  Relay Socket closed 
+11:36:06.855 INFO  Socket closed 
+11:36:42.027 INFO  Relay Socket closed 
+11:36:42.048 INFO  Socket closed 
+12:17:54.724 INFO  Total Cores: 2 
+12:17:54.724 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:17:54.756 INFO  Http client being served on port: 8080 
+12:18:03.509 INFO  Client Connecting 
+12:18:03.533 INFO  Client Connecting 
+12:18:03.553 INFO  Forwarding To Relay 
+12:18:03.602 INFO  Forwarding To Relay 
+12:18:07.439 INFO  Relay Socket closed 
+12:18:07.450 INFO  Socket closed 
+12:18:36.226 INFO  Relay Socket closed 
+12:18:36.228 INFO  Socket closed 
+12:21:03.294 INFO  Total Cores: 2 
+12:21:03.294 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+12:21:03.341 INFO  Http client being served on port: 8080 
+12:21:11.279 INFO  Client Connecting 
+12:21:11.301 INFO  Forwarding To Relay 
+12:21:11.451 INFO  Client Connecting 
+12:21:11.477 INFO  Forwarding To Relay 
+12:21:16.124 INFO  Relay Socket closed 
+12:21:16.132 INFO  Socket closed 
+12:21:47.541 INFO  Relay Socket closed 
+12:21:47.543 INFO  Socket closed 
+19:03:54.005 INFO  Total Cores: 2 
+19:03:54.005 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+19:03:54.087 INFO  Http client being served on port: 8080 
+19:04:19.477 INFO  Client Connecting 
+19:04:19.482 INFO  Forwarding To Relay 
+19:04:19.514 INFO  Client Connecting 
+19:04:19.526 INFO  Forwarding To Relay 
+19:04:23.370 INFO  Relay Socket closed 
+19:04:23.383 INFO  Socket closed 
+19:04:54.905 INFO  Relay Socket closed 
+19:04:54.915 INFO  Socket closed 
+19:06:36.353 INFO  Total Cores: 2 
+19:06:36.353 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+19:06:36.385 INFO  Http client being served on port: 8080 
+19:06:46.582 INFO  Client Connecting 
+19:06:46.588 INFO  Forwarding To Relay 
+19:06:46.637 INFO  Client Connecting 
+19:06:46.640 INFO  Forwarding To Relay 
+19:06:51.380 INFO  Relay Socket closed 
+19:06:51.385 INFO  Socket closed 
+19:07:17.276 INFO  Relay Socket closed 
+19:07:17.279 INFO  Socket closed 
+19:08:25.082 INFO  Client Connecting 
+19:08:25.093 INFO  Forwarding To Relay 
+19:08:25.105 INFO  Client Connecting 
+19:08:25.105 INFO  Forwarding To Relay 
+19:08:29.717 INFO  Relay Socket closed 
+19:08:29.725 INFO  Socket closed 
+19:08:55.987 INFO  Relay Socket closed 
+19:08:55.999 INFO  Socket closed 
+19:44:26.796 INFO  Total Cores: 2 
+19:44:26.796 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+19:44:26.825 INFO  Http client being served on port: 8080 
+19:50:04.202 INFO  Total Cores: 2 
+19:50:04.203 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+19:50:04.235 INFO  Http client being served on port: 8080 
+19:51:12.062 INFO  Total Cores: 2 
+19:51:12.063 INFO  Makertron Starting back end: 5.0.3 On Port 3000 
+19:51:12.091 INFO  Http client being served on port: 8080 
+19:51:15.066 INFO  Client Connecting 
+19:51:15.098 INFO  Forwarding To Relay 
+19:51:15.148 INFO  Client Connecting 
+19:51:15.160 INFO  Forwarding To Relay 
+19:51:19.807 INFO  Relay Socket closed 
+19:51:19.818 INFO  Socket closed 
+19:51:46.214 INFO  Relay Socket closed 
+19:51:46.234 INFO  Socket closed 
+19:52:28.148 INFO  Client Connecting 
+19:52:28.157 INFO  Forwarding To Relay 
+19:52:28.167 INFO  Client Connecting 
+19:52:28.169 INFO  Forwarding To Relay 
+19:52:32.073 INFO  Relay Socket closed 
+19:52:32.078 INFO  Socket closed 
+19:53:07.383 INFO  Relay Socket closed 
+19:53:07.389 INFO  Socket closed 

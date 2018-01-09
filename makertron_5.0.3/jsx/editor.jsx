@@ -27,11 +27,12 @@
 
 	'use strict'
 
-	import React from 'react';
-	import ReactDOM from 'react-dom';
-	import $ from "jquery";
+	import React from 'react'
+	import ReactDOM from 'react-dom'
+	import $ from "jquery"
+	import async from 'async'
 
-	import { Cell , Grid , FABButton , Icon , IconButton , Button , Textfield , Slider,DataTable , TableHeader} from 'react-mdl';
+	import { Cell , Grid , FABButton , Icon , IconButton , Button , Textfield , Slider,DataTable , TableHeader} from 'react-mdl'
 	
 	import styles from '../resource/styles/style.js'  
 	import shared from '../resource/styles/shared.js' 
@@ -44,35 +45,64 @@
 	import 'brace/theme/eclipse'
 
 	// --------------------------------------------------------
-	// Fetch project data from server and load up editor 
+	// Load up editor 
 	// --------------------------------------------------------
 
 	module.exports =  class EditorComponent extends React.Component {
 		constructor(props) {
-    	super(props);
-    	this.state = {text:""};
-			this.refreshData = this.refreshData.bind(this);
+    	super(props)
+    	this.state = {text:""}
+			this.refreshData = this.refreshData.bind(this)
+			
   	}
-		sendMessage(result) { this.props.patronus.updateScene(result)	  } 
+
 		textArea() { 
 			return <TextWidget  patronus={this} text={this.props.text}/>
 		}
+
 		refreshData() {	
-			try { 
-				var parser = new Parser(this.props.patronus) 
-				parser.load("module foo(){"+sessionStorage.text+"}")  
-				if ( parser.start() === false ) { 
-					this.sendMessage(false)
+
+			let parse = (str,  callback) => {				
+				try { 
+					let parser = new Parser(this.props.patronus) 
+					parser.load(str)  
+					if ( parser.start() === false ) { 
+						callback(false,null)
+					}
+					else { 
+						callback(null,parser.dump()) 	 
+					}
 				}
-				else { 
-					var result = parser.dump()
-					this.sendMessage(result)	 
-				}
+				catch(e) { 
+					callback(false,null) 
+				}    			 
 			}
-			catch(e) { 
-				this.sendMessage(false)
+
+			let sendMessage = (err,results) => {  
+				this.props.patronus.updateScene(results)	   
+			} 
+		 
+			let jobs = [] 
+			let pages = this.props.text.split("_CORE_") 
+			for ( let i = 0; i < pages.length; i++ ) { 
+				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
 			}
+
+			async.series(jobs, sendMessage.bind( null ) )	
+	
+			//$.get( "a.scad", ( text_a ) => { 
+			//	$.get( "b.scad", ( text_b ) => {
+			//		async.series([
+    	//				parse.bind(null, "module foo(){"+text_a+"}"  ),
+    	//				parse.bind(null, "module foo(){"+text_b+"}"  )
+			//			],
+			//			sendMessage.bind( null ) 	
+			//		)	
+			//	}) 
+			//})
+
 		}
+
 		componentDidUpdate() {
 		}
 		render() {

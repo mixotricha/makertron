@@ -159,34 +159,27 @@ module.exports = class ThreeComponent extends React.Component {
 
     // objects to be rendered in to scene. Really want the offscreen canvas so this can go in worker!
     createObject(geoBuffer) {
-        let i = 0,
-            f = 0,
-            vertices = [],
-            normals = [],
-            colors = [],
-            data, data_length
-      
-	    	  vertices = new Float32Array(geoBuffer)
-        var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        geometry.computeBoundingSphere()
-        geometry.computeVertexNormals()
-        var msh = []
-        var material = new THREE.MeshPhongMaterial({
-            color: 0x303F9F,
-            specular: 0xffffff,
-            shininess: 1,
-            side: THREE.DoubleSide
-        })
-        msh.push(new THREE.Mesh(geometry, material))
- 
-       var edges = new THREE.EdgesGeometry(geometry);
-        var lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
-            color: 0xffffff,
-            linewidth: 2
-        }));
-        msh.push(lines)
-        return msh
+    	let i = 0,	f = 0, vertices = [], normals = [], colors = [], data, data_length  
+	    vertices = new Float32Array(geoBuffer)
+      var geometry = new THREE.BufferGeometry()
+      geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3))
+      geometry.computeBoundingSphere()
+      geometry.computeVertexNormals()
+      var msh = []
+      var material = new THREE.MeshPhongMaterial({
+      	color: 0x303F9F,
+        specular: 0xffffff,
+        shininess: 1,
+       	side: THREE.DoubleSide
+      })
+      msh.push(new THREE.Mesh(geometry, material))
+      var edges = new THREE.EdgesGeometry(geometry);
+      var lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+      	color: 0xffffff,
+        linewidth: 2
+      }));
+      msh.push(lines)
+      return msh
     }
 
     // update scene
@@ -224,14 +217,18 @@ module.exports = class ThreeComponent extends React.Component {
         this.scene.add(axisHelper);
 
 				// Because it is faster to pass strings with postMessage and do the JSON.parse here in this loop.
+				// Note that this is multi dimensional because we can have multiple objects -and- multiple returns 
+				// of sets of objects from cores. 
 				if ( this.props.data.length !== 0 ) { 
-					let objLength = this.props.data.length;   
-        	for (i = 0; i < objLength; i++) {						
-        		var msh = this.createObject(JSON.parse(this.props.data[i]))
-        	  this.scene.add(msh[0]) // add object 
-        	  this.scene.add(msh[1]) // add surface lines 
-        	}				
+					for ( let i = 0; i < this.props.data.length; i++ ) { 
+						for ( let ii = 0; ii < this.props.data[i].length; ii++ ) {
+	        		var msh = this.createObject(JSON.parse(this.props.data[i][ii]))
+	        	  this.scene.add(msh[0]) // add object 
+	        	  this.scene.add(msh[1]) // add surface lines 							 
+						}
+					}
 				}
+		
     }
 
 

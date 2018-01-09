@@ -26,15 +26,15 @@ You can play with the live demo <a href="http://makertron.io">makertron.io</a>
 
 1. You will need to install both CGAL and OpenCascade. 
 
-	1. Download  <a href="https://www.opencascade.com/content/open-cascade-technology-710-available-download-0">OpenCascade 7.1.0</a>. Follow configuration and build instructions and make sure library is installed in a location searchable by path. 
+	1. Download  <a href="https://www.opencascade.com/content/open-cascade-technology-710-available-download-0">OpenCascade 7.1.0</a>. This takes awhile to build. Unfortunately OCE is only up to 6.9.1 and is only up to 6.9.1. Follow the configuration instructions for OpenCascade and make sure library is installed in a location searchable by path. 
 
 	2. For Ubuntu sudo apt-get install libcgal-dev
 
-2. git clone https://github.com/mixotricha/makertron 
+3. git clone https://github.com/mixotricha/makertron 
 
-3. cd makertron 
+4. cd makertron 
 
-4. Edit the config.jsn 
+5. Edit the config.jsn 
 
 {
 	"VERSION"        : "5.0.3", 
@@ -66,14 +66,16 @@ HSKEY       - Path to key ( do not include in subdir of client ! ).
 HSCERT      - Path to certificate ( do not include in subdir of client ! ).  
 
 
-5. cd in to the makertron_5.0.3 directory. 
-
 6. ./install.sh 
 
 7. Launch the makertron.js server.
 	node makertron.js 
 
 8. Repeat this configuration and installation process for each physical hardware node that you intend to serve geometry. 
+
+9. Open a browser to the localhost or address of hardware serving client. As an alterative you can also test it with the cli_client. 
+
+10. Have fun! 
 
 <h2>Support Matrix</h2> 
 
