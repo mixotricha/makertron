@@ -222,6 +222,7 @@ module.exports = class ThreeComponent extends React.Component {
 				if ( this.props.data.length !== 0 ) { 
 					for ( let i = 0; i < this.props.data.length; i++ ) { 
 						for ( let ii = 0; ii < this.props.data[i].length; ii++ ) {
+							//console.log( JSON.parse(this.props.data[i][ii]) )
 	        		var msh = this.createObject(JSON.parse(this.props.data[i][ii]))
 	        	  this.scene.add(msh[0]) // add object 
 	        	  this.scene.add(msh[1]) // add surface lines 							 
@@ -230,7 +231,6 @@ module.exports = class ThreeComponent extends React.Component {
 				}
 		
     }
-
 
     componentWillMount() {}
 

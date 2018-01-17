@@ -190,6 +190,13 @@
 
  		updateScene(results) {
 
+			//let htmlCanvas = document.getElementById("three_canvas");
+			//let offscreen = htmlCanvas.transferControlToOffscreen(); // This does not yet exist in Chrome. 
+																																 // Even though a non DOM canvas is 
+																																 // surely most compelling use case :| 
+
+			this.setState({ resultObjs: [] })
+
 			let worker = (result) => { 
 				this.progressOn()
 				this.setState({ connected: true  })	
@@ -198,7 +205,14 @@
 				myWorker.onmessage = (e)=> { 
 					let data = JSON.parse(e['data']) 
 					if ( data['type'] === "result" ) {
-						this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
+						
+						//if ( this.state.resultObjs.length > 0 ) { 
+								this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
+						//} 
+						//else { 
+						//	this.setState({ resultObjs: data['data'] }) 
+						//}
+						
 					}	
 					if ( data['type'] === "log" ) {
 						//let out = ""
@@ -229,6 +243,7 @@
 			for ( let i = 0; i < results.length; i++ ) { 	
 				worker(results[i]) 
 			}			 
+
 		}
 
 		updateLog(string) { 
@@ -294,10 +309,6 @@
 	
 		// On a change of state decide if we do a componentDidUpdate or not 
 		shouldComponentUpdate( nextProps , nextState ) { 
-
-			console.log( nextState.resultObjs ) 
-			console.log( this.state.resultObjs ) 
- 
 			if (  nextState.resultObjs !== this.state.resultObjs || nextState.text !== this.state.text ) { return true; } 
 			return false;  
 		}

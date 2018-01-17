@@ -34,6 +34,7 @@ var csgProcess = (function () {
 	// Pull server address here because no dom for sessionKeys 
   importScripts("client_config.js"); 
 
+
 	// ============================================================
 	// Generate three cube 
 	// ============================================================
@@ -189,7 +190,7 @@ var csgProcess = (function () {
 	
 	// Output our scene to the renderer 
 	onmessage = function(e) {
-	  fetchGeometry(e['data'])     
+	  fetchGeometry(e['data'])    
 	}
   
 	return {

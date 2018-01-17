@@ -83,24 +83,15 @@
 			} 
 		 
 			let jobs = [] 
-			let pages = this.props.text.split("_CORE_") 
+
+			let pages = sessionStorage.text.split("_CORE_")
+
 			for ( let i = 0; i < pages.length; i++ ) { 
 				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
 			}
 
 			async.series(jobs, sendMessage.bind( null ) )	
-	
-			//$.get( "a.scad", ( text_a ) => { 
-			//	$.get( "b.scad", ( text_b ) => {
-			//		async.series([
-    	//				parse.bind(null, "module foo(){"+text_a+"}"  ),
-    	//				parse.bind(null, "module foo(){"+text_b+"}"  )
-			//			],
-			//			sendMessage.bind( null ) 	
-			//		)	
-			//	}) 
-			//})
-
+				
 		}
 
 		componentDidUpdate() {
