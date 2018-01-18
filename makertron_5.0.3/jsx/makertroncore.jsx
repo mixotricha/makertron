@@ -173,20 +173,21 @@
 			this.handleDrag = this.handleDrag.bind(this)	
 			this.updateDimensions = this.updateDimensions.bind(this) 
   	}
+
 		progressOn() { 
 			$("#gearstart").css('opacity'  ,   1)
 			$("#gearstop").css('opacity'   ,   0)			
 		}
+
 		progressOff() { 
 			$("#gearstart").css('opacity'  ,   0)
 			$("#gearstop").css('opacity'   ,   0)			
 		}
+
 		progressStop() { 
 			$("#gearstart").css('opacity'  ,   0)
 			$("#gearstop").css('opacity'   ,   1)			
 		}
-
-		
 
  		updateScene(results) {
 
@@ -194,10 +195,9 @@
 			//let offscreen = htmlCanvas.transferControlToOffscreen(); // This does not yet exist in Chrome. 
 																																 // Even though a non DOM canvas is 
 																																 // surely most compelling use case :| 
-
 			this.setState({ resultObjs: [] })
 
-			let worker = (result) => { 
+			let worker = (result,last) => { 
 				this.progressOn()
 				this.setState({ connected: true  })	
 				let myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
@@ -205,20 +205,13 @@
 				myWorker.onmessage = (e)=> { 
 					let data = JSON.parse(e['data']) 
 					if ( data['type'] === "result" ) {
-						
-						//if ( this.state.resultObjs.length > 0 ) { 
-								this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
-						//} 
-						//else { 
-						//	this.setState({ resultObjs: data['data'] }) 
-						//}
-						
+						this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
 					}	
 					if ( data['type'] === "log" ) {
 						//let out = ""
 						//let rows = JSON.parse(data['data'])
 						//if ( rows['0'] !== undefined ) out+= rows['0']	 					
-						//this.updateLog(data['data']+"\n")
+						this.updateLog(data['data']+"\n")
 					}
 					if ( data['type'] === "pulse" ) { 
 						if ( this.state.connected === true ) { 
@@ -230,7 +223,7 @@
 					}
 					if ( data['type'] === "close" ) { 
 						this.setState({ connected: false  })	
-						this.progressStop()
+						if ( last === true ) this.progressStop()
 					}
 					if ( data['type'] === "error" ) { 
 						this.updateLog(data['data']) 
@@ -241,7 +234,12 @@
 			}	
 
 			for ( let i = 0; i < results.length; i++ ) { 	
-				worker(results[i]) 
+				if ( i === results.length-1 ) { 
+					worker(results[i],true) 
+				}
+				else { 
+					worker(results[i],false)
+				}
 			}			 
 
 		}
@@ -252,7 +250,7 @@
 		}
 
 		handleDrag(event) {
-		//	this.setState({ component: true  })	  
+			this.setState({ component: true  })	  
 		} 
 
 		tools() { 
