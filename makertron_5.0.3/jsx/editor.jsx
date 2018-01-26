@@ -31,6 +31,9 @@
 	import ReactDOM from 'react-dom'
 	import $ from "jquery"
 	import async from 'async'
+	
+	import { saveAs } from 'file-saver'
+	import FileDialog from 'file-dialog' 
 
 	import { Cell , Grid , FABButton , Icon , IconButton , Button , Textfield , Slider,DataTable , TableHeader} from 'react-mdl'
 	
@@ -52,17 +55,26 @@
 		constructor(props) {
     	super(props)
     	this.state = {text:""}
+			this.saveScad    = this.saveScad.bind(this)
+			this.loadScad    = this.loadScad.bind(this)
 			this.refreshData = this.refreshData.bind(this)
-			
   	}
-
 		textArea() { 
 			return <TextWidget  patronus={this} text={this.props.text}/>
 		}
-
-		refreshData() {	
-
-			let parse = (str,  callback) => {				
+		saveScad() { 
+			var blob = new Blob([sessionStorage.text], {type: "text/plain;charset=utf-8"});
+			saveAs( blob , "output.scad" ) 
+		} 
+		loadScad() { 
+			FileDialog({ multiple: false }, file => {
+    		console.log(file.blob) 
+			})
+		}
+		// Takes the current scad and sends it to server for rendering. 
+		// Includes simple _CORE_ split 
+		refreshData(expStl) {	
+			let parse = (str,  callback) => {	// Parse each chunk of script split by a _CORE_ 			
 				try { 
 					let parser = new Parser(this.props.patronus) 
 					parser.load(str)  
@@ -77,34 +89,32 @@
 					callback(false,null) 
 				}    			 
 			}
-
 			let sendMessage = (err,results) => {  
-				this.props.patronus.updateScene(results)	   
+				this.props.patronus.updateScene(results,expStl)	   
 			} 
-		 
 			let jobs = [] 
-
-			let pages = sessionStorage.text.split("_CORE_")
-
+			let pages = sessionStorage.text.split("_CORE_")	
 			for ( let i = 0; i < pages.length; i++ ) { 
 				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
 			}
-
-			async.series(jobs, sendMessage.bind( null ) )	
-				
+			async.series(jobs, sendMessage.bind( null ) )					
 		}
-
 		componentDidUpdate() {
 		}
 		render() {
     	return (
 				<div style={{height:'100%',width:'100%',position:'absolute'}}>
-					<button style={styles.button} type="button" id="update" onClick={this.refreshData}>Generate</button>
-    			<div >{this.textArea()}</div>
+					<button style={styles.button} type="button" id="load"    onClick={this.loadScad}               >Load SCAD</button>
+					<button style={styles.button} type="button" id="save"    onClick={this.saveScad}               >Save SCAD</button>
+					<button style={styles.button} type="button" id="stl"     onClick={() => this.refreshData(true)}>Export STL</button> 
+					<button style={styles.button} type="button" id="refresh" onClick={() => this.refreshData(false)}>Render</button> 
+					<div >{this.textArea()}</div>
 				</div>
     	);
   	}
 	}
+					
+
 
 	// -------------------------------------------------
 	// Wrapper for react ace editor component 
@@ -125,29 +135,28 @@
 		}
 		onChange(text) {  
 			sessionStorage.text = text
-			//this.state.text = text;
 		}
 		componentDidUpdate() {
 			sessionStorage.text = this.props.text 
 		}
 		render() {
     	return (
-				
 				<AceEditor  
-									key={shared.makeId()}
-									id="texteditor"
-    							setOptions={{vScrollBarAlwaysVisible:true}}
-									value={this.props.text}
-									onChange={this.onChange}
-									editorProps={{$blockScrolling:Infinity}}
-									style={styles.ace_editor}
-									mode="text"
-        					theme="eclipse"
- 							/>
-				
-    	);
+					key={shared.makeId()}
+					id="texteditor"
+    			setOptions={{vScrollBarAlwaysVisible:true}}
+					value={this.props.text}
+					onChange={this.onChange}
+					editorProps={{$blockScrolling:Infinity}}
+					style={styles.ace_editor}
+					mode="text"
+        	theme="eclipse"
+ 				/>
+    	)
   	}
 	}
 
+
+	
 
 

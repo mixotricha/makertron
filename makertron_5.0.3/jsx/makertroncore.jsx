@@ -30,6 +30,8 @@
 	import React from 'react'
 	import ReactDOM from 'react-dom'	
 	import $ from "jquery";
+	import async from 'async'
+	import { saveAs } from 'file-saver'
 
 	import { Cell , Grid , FABButton , Icon , IconButton , Button , Textfield , Slider} from 'react-mdl';	
 
@@ -189,15 +191,47 @@
 			$("#gearstop").css('opacity'   ,   1)			
 		}
 
- 		updateScene(results) {
-
+ 		updateScene(results,expStl) {
+ 
 			//let htmlCanvas = document.getElementById("three_canvas");
 			//let offscreen = htmlCanvas.transferControlToOffscreen(); // This does not yet exist in Chrome. 
 																																 // Even though a non DOM canvas is 
-																																 // surely most compelling use case :| 
+  																															 // surely most compelling use case :| 
+			
 			this.setState({ resultObjs: [] })
 
-			let worker = (result,last) => { 
+			let stlGenerate = (obj) => { 
+				let stl = "" 
+				for ( let i = 0; i < obj.length; i+=3*3 ) {
+					stl += "facet normal 1 1 1\n" 
+    			stl += "	outer loop\n" 
+        	stl += "  vertex " + obj[i+2] + " " + obj[i+1] + " " + obj[i+0] + "\n"  
+        	stl += "  vertex " + obj[i+5] + " " + obj[i+4] + " " + obj[i+3] + "\n"
+        	stl += "  vertex " + obj[i+8] + " " + obj[i+7] + " " + obj[i+6] + "\n"
+					stl += " endloop\n"       
+					stl += " endfacet\n"
+				}
+				return stl
+			}
+
+			let done = (err,results) => {  
+		
+				if ( expStl === true ) {
+					let stl = "solid spewchickens\n" 
+  				for ( let i = 0; i < this.state.resultObjs.length; i++ ) { 
+						for ( let ii = 0; ii < this.state.resultObjs[i].length; ii++ ) {
+							stl+=stlGenerate( JSON.parse(this.state.resultObjs[i][ii]) )
+	  				}
+					}
+					stl += "endsolid spewchickens\n"
+					let blob = new Blob([stl], {type: "text/plain;charset=utf-8"});
+					saveAs( blob , "test.stl" )  
+				}
+				
+				this.progressStop()
+			}
+
+			let worker = (result,callback) => { 
 				this.progressOn()
 				this.setState({ connected: true  })	
 				let myWorker = new Worker("js/makertron_worker.js?hash="+makeId()); 
@@ -206,11 +240,9 @@
 					let data = JSON.parse(e['data']) 
 					if ( data['type'] === "result" ) {
 						this.setState({ resultObjs: [...this.state.resultObjs , data['data'] ] })
+						callback(null,true)
 					}	
 					if ( data['type'] === "log" ) {
-						//let out = ""
-						//let rows = JSON.parse(data['data'])
-						//if ( rows['0'] !== undefined ) out+= rows['0']	 					
 						this.updateLog(data['data']+"\n")
 					}
 					if ( data['type'] === "pulse" ) { 
@@ -223,24 +255,22 @@
 					}
 					if ( data['type'] === "close" ) { 
 						this.setState({ connected: false  })	
-						if ( last === true ) this.progressStop()
 					}
 					if ( data['type'] === "error" ) { 
 						this.updateLog(data['data']) 
 						this.progressOff()
 					}
-				}
-			
+				}			
 			}	
 
-			for ( let i = 0; i < results.length; i++ ) { 	
-				if ( i === results.length-1 ) { 
-					worker(results[i],true) 
-				}
-				else { 
-					worker(results[i],false)
-				}
-			}			 
+			
+			let wrkers = [] 
+			 
+			for ( let i = 0; i < results.length; i++ ) {
+				wrkers.push( worker.bind(null,results[i]) )  
+			}
+
+			async.parallel( wrkers , done.bind( null ) )			
 
 		}
 
