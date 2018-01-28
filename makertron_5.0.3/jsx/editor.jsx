@@ -52,29 +52,61 @@
 	// --------------------------------------------------------
 
 	module.exports =  class EditorComponent extends React.Component {
+
 		constructor(props) {
     	super(props)
-    	this.state = {text:""}
+    	this.state = { text : "" }
 			this.saveScad    = this.saveScad.bind(this)
 			this.loadScad    = this.loadScad.bind(this)
 			this.refreshData = this.refreshData.bind(this)
+			this.initialLoad = this.initialLoad.bind(this) 
   	}
-		textArea() { 
-			return <TextWidget  patronus={this} text={this.props.text}/>
+
+		// when component is first loaded state will be "" 
+		initialLoad() { 
+			if ( this.state.text === "" ) { 
+				return this.props.text // If we have not interacted with textarea   
+			}
+			else { 
+				return this.state.text
+			} 
 		}
+
+		// update textarea component 
+		updateTextArea(text) {  
+			this.setState({text: text }) 
+		}
+
+		// return textarea component 
+		textArea() { 
+			let scad = this.initialLoad() 
+			return <TextWidget  patronus={this} text={scad}/>	
+		}
+
+		// save scad file 
 		saveScad() { 
-			var blob = new Blob([sessionStorage.text], {type: "text/plain;charset=utf-8"});
+			let scad = this.initialLoad() 
+			let blob = new Blob([scad], {type: "text/plain;charset=utf-8"});
 			saveAs( blob , "output.scad" ) 
 		} 
-		loadScad() { 
-			FileDialog({ multiple: false }, file => {
-    		console.log(file.blob) 
+
+		// load scad file 
+		loadScad ()  { 
+			let _this = this
+			FileDialog( file => {
+					let reader = new FileReader();
+					reader.onload = function(e) {	
+						 _this.setState({text: reader.result }) 
+					}
+					reader.readAsText(file[0]);
 			})
 		}
-		// Takes the current scad and sends it to server for rendering. 
-		// Includes simple _CORE_ split 
+
+		// Takes the current scad and sends it to server for rendering. Includes simple _CORE_ split 
 		refreshData(expStl) {	
-			let parse = (str,  callback) => {	// Parse each chunk of script split by a _CORE_ 			
+			let scad = this.initialLoad()
+			// Parse each chunk of script split by a _CORE_
+			let parse = (str,  callback) => {	 			
 				try { 
 					let parser = new Parser(this.props.patronus) 
 					parser.load(str)  
@@ -89,18 +121,22 @@
 					callback(false,null) 
 				}    			 
 			}
+			// send message back to the core 
 			let sendMessage = (err,results) => {  
 				this.props.patronus.updateScene(results,expStl)	   
 			} 
+			// build up job list of script to process
 			let jobs = [] 
-			let pages = sessionStorage.text.split("_CORE_")	
+			let pages = scad.split("_CORE_")
+
+			console.log( "meh" , pages.constructor  ) 
+	
 			for ( let i = 0; i < pages.length; i++ ) { 
 				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
 			}
 			async.series(jobs, sendMessage.bind( null ) )					
 		}
-		componentDidUpdate() {
-		}
+
 		render() {
     	return (
 				<div style={{height:'100%',width:'100%',position:'absolute'}}>
@@ -114,35 +150,26 @@
   	}
 	}
 					
-
-
 	// -------------------------------------------------
 	// Wrapper for react ace editor component 
 	// -------------------------------------------------
+
 	class TextWidget extends React.Component {	
 		constructor(props) {
-    	super(props);
-    	this.state = { text: "" };
-			this.onChange = this.onChange.bind(this);
-			this.onFocusLeave = this.onFocusLeave.bind(this);
-			this.onEnter = this.onEnter.bind(this);
-  	}	
-		onFocusLeave(event) {	// updata data
-			console.log("We are leaving here!") 
-		}
-		onEnter(event) {	// updata data
-			console.log("We are in here") 
-		}
+    	super(props)
+    	this.state        = { text: "" }
+			this.onChange     = this.onChange.bind(this)
+		}	
+
+		// change event pushes back to editor component 
 		onChange(text) {  
-			sessionStorage.text = text
+			this.props.patronus.updateTextArea(text) 
 		}
-		componentDidUpdate() {
-			sessionStorage.text = this.props.text 
-		}
+
 		render() {
     	return (
 				<AceEditor  
-					key={shared.makeId()}
+					key="textEditor02030"
 					id="texteditor"
     			setOptions={{vScrollBarAlwaysVisible:true}}
 					value={this.props.text}

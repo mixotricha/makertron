@@ -241,9 +241,13 @@
   			for ( let i = 0; i < keys.length; i++ ) {
   				let arg = arguments[0][keys[i]];
     			if ( !(arg instanceof Array)) { // reject arrays 
+						if ( keys[i] === "d" ) { 
+							r1 = arg / 2
+							r2 = arg / 2  
+						}						
 						if ( keys[i] === "r" ) { 
-							r1 = arg;
-							r2 = arg;
+							r1 = arg
+							r2 = arg
 						}
 						if ( keys[i] === "r1" ) {	
 							r1 = arg; 
@@ -254,7 +258,7 @@
 						if ( keys[i] === "h"  ) { 
 							h  = arg; 
 						}
-						if ( keys[i] !== "h" && keys[i] !== "r" && keys[i] !== "r1" && keys[i] !== "r2" )  { 
+						if ( keys[i] !== "h" && keys[i] !== "r" && keys[i] !== "r1" && keys[i] !== "r2" && keys[i] !== "d" )  { 
 							if ( index === 0 ) { h = arg; }
 							if ( index === 1 ) { r1 = arg; }
 							if ( index === 2 ) { r2 = arg; }
@@ -264,10 +268,15 @@
 					}  
   			}			
 				this.debug(["cylinder",h,r,r1,r2]);  
-				if ( typeof(arguments[0]['r1']) === "number"      ) { r1 = parseFloat(arguments[0]['r1']);         }
-				if ( typeof(arguments[0]['r2']) === "number"      ) { r2 = parseFloat(arguments[0]['r2']);         }
-				if ( typeof(arguments[0]['h'] ) === "number"      ) { h =  parseFloat(arguments[0]['h'] );         }
-				if ( typeof(arguments[0]['center']) === "boolean" ) { center =        arguments[0]['center'];      }
+				// If we are given a single argument 
+				if ( typeof(arguments[0]['d']) === "number"      ) { 
+					r1 = parseFloat(arguments[0]['d'])/2          
+					r2 = parseFloat(arguments[0]['d'])/2
+				}
+				if ( typeof(arguments[0]['r1']) === "number"      ) { r1 = parseFloat(arguments[0]['r1'])          }
+				if ( typeof(arguments[0]['r2']) === "number"      ) { r2 = parseFloat(arguments[0]['r2'])          }
+				if ( typeof(arguments[0]['h'] ) === "number"      ) { h =  parseFloat(arguments[0]['h'] )          }
+				if ( typeof(arguments[0]['center']) === "boolean" ) { center =        arguments[0]['center']       }
 				if ( center === true                              ) { y = -(h / 2);                                }			
 				if ( r1 !== r2 ) { 
 					obj = this.brep_lib.ffi_cone(r1,r2,h,y);

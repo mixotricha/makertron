@@ -90,73 +90,17 @@
   	}
 	}
 				
-
-	// =========================================================
-	// Tools 
-	// =========================================================
+	// ---------------------------------------------------------
+	// Tool bar. Empty for now
+	// ---------------------------------------------------------
 	class Tools extends React.Component	{
 		constructor(props) {
     	super(props);
     	this.state = {};
-			this.editor_front = this.editor_front.bind(this);
-			this.viewer_front = this.viewer_front.bind(this);	
   	}	
-		componentWillMount() {}
-		componentDidMount() { this.viewer_front() }
-
-		editor_front(){	
-			console.log("editor")
-
-			//$("#editor").css('opacity'    , 0.8);
-			//$("#widgets").css('opacity' , 0);
-			//$("#console").css('opacity'   , 0);
-			//$("#viewer").css('opacity'    ,  1);
-
-			//$("#editor").css('z-index' ,  3)
-			//$("#viewer").css('z-index' ,  2)
-			//$("#console").css('z-index' , 1)
-		}
-		viewer_front(){
-			console.log("viewer")
-			//$("#editor").css('opacity' , 0)
-			//$("#widgets").css('opacity', 0)
-			//$("#console").css('opacity' ,0)
-			//$("#viewer").css('opacity' , 1)
-			//$("#viewer").css('z-index' , 3)
-			//$("#editor").css('z-index' , 2)
-			//$("#console").css('z-index' , 1)
-		}
-		widgets_front(){
-			//console.log("widgets") 
-			//$("#editor").css('opacity'  ,   0);
-			//$("#widgets").css('opacity' , 0.8);
-			//$("#console").css('opacity' ,   0);
-			//$("#viewer" ).css('opacity' ,   1);
-			//$("#widgets").css('z-index' ,   2);
-		}
-
-		console_front(){
-			console.log("console") 
-			$("#editor").css('opacity'  ,   0);
-			$("#widgets").css('opacity' ,   0);
-			$("#console").css('opacity' , 0.8);
-			$("#viewer" ).css('opacity' ,   1);
-
-			$("#console").css('z-index' , 3)
-			$("#viewer").css('z-index'  , 2)
-			$("#editor").css('z-index'  , 1)
-
-		}
-
 		render() {
-
-			//<div className="col-xs-1"><button style={styles.button} type="button" id="Widgets" onClick={this.widgets_front}>Widgets</button></div>
-		
     	return ( 
 					<div className="row" >
-						<div className="col-xs-1"><button style={styles.button} type="button" id="Edit" onClick={this.editor_front}>Edit</button></div>
-						<div className="col-xs-1"><button style={styles.button} type="button" id="3D" onClick={this.viewer_front}>3D</button></div>
-						<div className="col-xs-1"><button style={styles.button} type="button" id="Console" onClick={this.console_front}>Console</button></div> 
 					</div>
     	);
   	}
@@ -168,6 +112,7 @@
 	//------------------------------------------------
 			
 	class Start extends React.Component {
+
 		constructor(props) {
     	super(props);
     	this.state = { resultObjs: [] , log: "" , text: "" , component: false , connected : false };
@@ -176,30 +121,34 @@
 			this.updateDimensions = this.updateDimensions.bind(this) 
   	}
 
+		// turn progress bar on 
 		progressOn() { 
 			$("#gearstart").css('opacity'  ,   1)
 			$("#gearstop").css('opacity'   ,   0)			
 		}
 
+		// turn progress bar off
 		progressOff() { 
 			$("#gearstart").css('opacity'  ,   0)
 			$("#gearstop").css('opacity'   ,   0)			
 		}
 
+		// stop progress bar
 		progressStop() { 
 			$("#gearstart").css('opacity'  ,   0)
 			$("#gearstop").css('opacity'   ,   1)			
 		}
 
+		// update our scene 
  		updateScene(results,expStl) {
  
-			//let htmlCanvas = document.getElementById("three_canvas");
-			//let offscreen = htmlCanvas.transferControlToOffscreen(); // This does not yet exist in Chrome. 
-																																 // Even though a non DOM canvas is 
-  																															 // surely most compelling use case :| 
+			// This does not yet exist in Chrome. Even though a non DOM canvas is surely most compelling use case. 
+			// Then all of three would go inside the workers but I am including it here for when it does.  
+			//let htmlCanvas = document.getElementById("three_canvas")
+			//let offscreen = htmlCanvas.transferControlToOffscreen()  
 			
 			this.setState({ resultObjs: [] })
-
+			// output an stl string 
 			let stlGenerate = (obj) => { 
 				let stl = "" 
 				for ( let i = 0; i < obj.length; i+=3*3 ) {
@@ -213,9 +162,8 @@
 				}
 				return stl
 			}
-
+			// When all our server chunks finished save to an stl ( if we asked to ) 
 			let done = (err,results) => {  
-		
 				if ( expStl === true ) {
 					let stl = "solid spewchickens\n" 
   				for ( let i = 0; i < this.state.resultObjs.length; i++ ) { 
@@ -225,12 +173,11 @@
 					}
 					stl += "endsolid spewchickens\n"
 					let blob = new Blob([stl], {type: "text/plain;charset=utf-8"});
-					saveAs( blob , "test.stl" )  
+					saveAs( blob , "output.stl" )  
 				}
-				
 				this.progressStop()
 			}
-
+			// hand a scad chunk to the server
 			let worker = (result,callback) => { 
 				this.progressOn()
 				this.setState({ connected: true  })	
@@ -262,44 +209,48 @@
 					}
 				}			
 			}	
-
-			
+			// similar pattern to editor .. hand now in 'parallel' to server. 
 			let wrkers = [] 
-			 
 			for ( let i = 0; i < results.length; i++ ) {
 				wrkers.push( worker.bind(null,results[i]) )  
 			}
-
 			async.parallel( wrkers , done.bind( null ) )			
-
 		}
 
+		// output to log 
 		updateLog(string) { 
 			var txt = this.state.log+=string
 			this.setState({ log   : txt })
 		}
 
+		// handle drag event 
 		handleDrag(event) {
 			this.setState({ component: true  })	  
 		} 
 
+		// return tools component 
 		tools() { 
 			return (<Tools patronus={this}/>)
 		} 
+
+		// return editor component 
 		editor() { 
-			if ( sessionStorage.text === undefined ) { 
+			if ( this.state.text !== undefined ) { 
 				return (<EditorComponent patronus={this} text={this.state.text}/>)
 			}
-			else { 
-				return (<EditorComponent patronus={this} text={sessionStorage.text}/>)
-			}
 		}
+
+		// return console component 
 		console() { 	 
 			return (<ConsoleComponent patronus={this} data={this.state.log} />)		
 		}
+
+		//return viewer component 
 		viewer() { 	 
 			return (<ThreeComponent patronus={this} data={this.state.resultObjs} />)		
 		}
+
+		//return login component 
 		Login() { 
 			return(<Login />)
 		}
@@ -311,7 +262,7 @@
 
 		// Load our default model on component being mounted 
 		componentWillMount() { 
-			if ( sessionStorage.text === undefined ) {
+			if ( this.state.text === "" ) {
 				$.get( "pipe.scad", ( data ) => { 
 					this.setState({text:data})
 					this.updateLog("Loading default example...\n") 	
@@ -325,7 +276,10 @@
 			$('#mainview').on("contextmenu",()=>{return false;}); 
 		}
 
-  	componentWillUnmount() {
+		// On a change of state decide if we do a componentDidUpdate or not 
+		shouldComponentUpdate( nextProps , nextState ) { 
+			if (  nextState.resultObjs !== this.state.resultObjs || nextState.text !== this.state.text ) { return true; } 
+			return false;  
 		}
 
 		// Something in our state changed now update	
@@ -335,12 +289,6 @@
 			this.console() 
 		}
 	
-		// On a change of state decide if we do a componentDidUpdate or not 
-		shouldComponentUpdate( nextProps , nextState ) { 
-			if (  nextState.resultObjs !== this.state.resultObjs || nextState.text !== this.state.text ) { return true; } 
-			return false;  
-		}
-
   	render() {
     	return (
     		<div style={styles.whole_page}>

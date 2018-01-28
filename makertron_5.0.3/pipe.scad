@@ -155,19 +155,21 @@ flange_thickness=0,flange_id=0,flange_od=0,holes=0
 }
 
 translate([200,200,200]) { 
-test( pipe_od = 20,
-    pipe_id = 15,
-    pipe_length = 200,
-    flange_thickness = 20, 
-    flange_id = 15, 
-    flange_od = 60,     
-    holes = 6); 
+	union() { 
+		test( pipe_od = 20,
+				pipe_id = 15,
+				pipe_length = 200,
+				flange_thickness = 20, 
+				flange_id = 15, 
+				flange_od = 60,     
+				holes = 6); 
 
-minkowski() { 
- cube(size=50/2,center=true); 
- sphere(r=25/2); 
- cylinder(r1=30/2,r2=5/2,h=100/2); 
-}
+		minkowski() { 
+		 cube(size=50/2,center=true); 
+		 sphere(r=25/2); 
+		 cylinder(r1=30/2,r2=5/2,h=100/2); 
+		}
+	}
 }
 
 _CORE_ 
@@ -207,17 +209,19 @@ flange_thickness=0,flange_id=0,flange_od=0,holes=0
 }
 
 translate([-200,200,200]) { 
-test( pipe_od = 20,
-    pipe_id = 15,
-    pipe_length = 200,
-    flange_thickness = 20, 
-    flange_id = 15, 
-    flange_od = 60,     
-    holes = 6); 
+	union() { 
+		test( pipe_od = 20,
+				pipe_id = 15,
+				pipe_length = 200,
+				flange_thickness = 20, 
+				flange_id = 15, 
+				flange_od = 60,     
+				holes = 6); 
 
-minkowski() { 
- cube(size=50/2,center=true); 
- sphere(r=25/2); 
- cylinder(r1=30/2,r2=5/2,h=100/2); 
-}
+		minkowski() { 
+		 cube(size=50/2,center=true); 
+		 sphere(r=25/2); 
+		 cylinder(r1=30/2,r2=5/2,h=100/2); 
+		}
+	}
 }
