@@ -107,8 +107,8 @@
 			let scad = this.initialLoad()
 			// Parse each chunk of script split by a _CORE_
 			let parse = (str,  callback) => {	 			
-				try { 
-					let parser = new Parser(this.props.patronus) 
+				try { 				
+					let parser = new Parser(this.props.patronus)
 					parser.load(str)  
 					if ( parser.start() === false ) { 
 						callback(false,null)
@@ -128,8 +128,6 @@
 			// build up job list of script to process
 			let jobs = [] 
 			let pages = scad.split("_CORE_")
-
-			console.log( "meh" , pages.constructor  ) 
 	
 			for ( let i = 0; i < pages.length; i++ ) { 
 				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
