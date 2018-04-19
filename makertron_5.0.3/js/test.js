@@ -344,96 +344,133 @@ Array.prototype.smap = function(callback) {
 			//console.log( tree.filter( a => a.parent !== -1 ? true : false) ) 	
 			
 
-
+	// --------------------------------------------------------
+	// Generate a hashed string
+	// --------------------------------------------------------
+	makeId = () => { 
+		let i = 0 
+		let text = "";
+		let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for( i=0; i < 5; i++ )
+		text += possible.charAt(Math.floor(Math.random() * possible.length));
+		return text;
+	}
+	// --------------------------------------------------------
+	// Is this token an operation 
+	// --------------------------------------------------------
+	isToken = tkn => 			
+		tkn === "difference" || 
+		tkn === "union" || 
+		tkn === "rotate" || 
+		tkn === "translate" || 
+		tkn === "sphere" ||
+		tkn === "cube" ||
+		tkn === "circle" || 
+		tkn === "if" ||
+		tkn === "for" 
+			? true : false 		
+		
+	// --------------------------------------------------------
+	// Is this token closure / compound related
+	// --------------------------------------------------------
+	isClosure = tkn => 
+		tkn === ";" ||
+		tkn === "}" ||
+		tkn === "{" 
+			? true : false 		
+		
 	const smashPunks = stream => { 
 		
 		// --------------------------------------------------------
 		// Strip unique id from token 		
 		// --------------------------------------------------------
-		getToken = tkn =>  
-			( tkn !== false && tkn !== true ) ? tkn.split("__||__")[1] : false 
+		getToken = tkn => ( tkn !== false && tkn !== true ) ? tkn.split("__||__")[1] : false 
 		
 		// --------------------------------------------------------
 		// Strip token from unique id 		
 		// --------------------------------------------------------
 		getId = tkn => tkn.split("__||__")[0]
 
-		// --------------------------------------------------------
-		// Is this token an operation 
-		// --------------------------------------------------------
-		isToken = tkn => 			
-			tkn === "difference" || 
-			tkn === "union" || 
-			tkn === "rotate" || 
-			tkn === "translate" || 
-			tkn === "sphere" ||
-			tkn === "cube" ||
-			tkn === "circle" || 
-			tkn === "if" ||
-			tkn === "for" 
-				? true : false 		
-		
-		// --------------------------------------------------------
-		// Is this token closure / compound related
-		// --------------------------------------------------------
-		isClosure = tkn => 
-			tkn === ";" ||
-			tkn === "}" ||
-			tkn === "{" 
-				? true : false 		
+		Array.prototype.findId = function( id ) { 
+			return this.reduce( (stack,tkn,index) => id === getId(tkn ) ? stack.concat(index) : stack , [] ) 
+		}
 
 		// --------------------------------------------------------
-		// Generate a hashed string
+		// Tokens : find matching closure 
 		// --------------------------------------------------------
-		makeId = () => { 
-			let i = 0 
-			let text = "";
-			let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-			for( i=0; i < 5; i++ )
-				text += possible.charAt(Math.floor(Math.random() * possible.length));
-			return text;
+		findPair = lft => rt => lftCount => rtCount => index => lst => { 
+			getToken(lst[index]) === lft ? lftCount++ : lftCount  
+			getToken(lst[index]) === rt ? rtCount++ : rtCount  
+			return ( index > lst.length ) ? -1 
+				: ( lftCount === 0 && rtCount === 0 ) ? -1 
+				: ( lftCount === rtCount ) ? index 
+				: findPair(lft)(rt)(lftCount)(rtCount)(index+1)(lst)
+		}
+
+		// --------------------------------------------------------
+		// Consume stream picking out valid operations 
+		// --------------------------------------------------------
+		let consumeStream = index => root => stack => result => { 	 
+			if ( index < table.length-1 ) { 	
+				sTkn = getToken(table[index])
+				if ( sTkn === ";" || sTkn === "{" )  {  
+					if ( sTkn === ";" ) root = table[index] 
+					result.push( stack.reverse() ) 
+					stack = [] 
+				}
+		  	if ( isToken(sTkn) ) { stack.push( [table[index] , root] ) } 	
+	    	consumeStream(index+1)(root)(stack)(result)   
+			} 
+		  return result
+		}		
+
+		// Update good clean closure back in to the original stream 
+		updateRawIdStream = index => { 
+			let rTab = rMap[index] 
+			let stepBoom = i => { 				   
+				if ( i < rTab.length-1 ) { 
+					let start = getId(rTab[i][0])
+					let startIndex = parseInt(rawIdStream.findId( start ))+1 
+					let end =   getId(rTab[i][1]) 
+					let sOff = findPair("(")(")")(0)(0)(startIndex)(rawIdStream) // you must get the argument that comes after an operation 
+					rawIdStream[ sOff ] +="{"  // side effects bad 
+					rawIdStream[ parseInt(rawIdStream.findId( end )) ] +="}" // side effects bad 
+					stepBoom(i+1) 
+				}
+			}		
+			stepBoom(0) 		 
+			if ( index < rMap.length-1 ) updateRawIdStream(index+1) 
 		}
 		
+
 		// add lookup id to each token 
 		let rawIdStream = stream.map( tkn => makeId()+"__||__"+tkn )
  
 		// set everything that is not closure or operations to false
 		let idStream = rawIdStream.map( tkn => isToken(getToken(tkn)) || isClosure(getToken(tkn)) ? tkn : false )
 
+		// filter out all false tokens and then reverse stream 
 		let table = idStream.filter( j => j !== false ? true : false  ).reverse()
-		
-		let consumeNext = index => root => stack => result => { 	 
-			if ( index < table.length-1 ) { 	
-				sTkn = getToken(table[index])
-		 	
-				if ( sTkn === ";" || sTkn === "{" )  {  
-					if ( sTkn === ";" ) root = table[index] 
-					result.push( stack.reverse() ) 
-					stack = [] 
-				}
 
-		  	if ( isToken(sTkn) ) { stack.push( [sTkn , root] ) } 
-				
-	    	consumeNext(index+1)(root)(stack)(result)   
-			} 
-		  return result
-		}		
-
-		let res = consumeNext(0)([])([])([])
+		// Consume tokens 
+		let rMap = consumeStream(0)([])([])([])
 								.reduce( (stack,tkn) => tkn.length > 1 ? stack.concat([tkn]) : stack , [])   
-  
-		
+  	
+		// Update raw stream with updated closure 
+		updateRawIdStream(0) 
+
+		console.log( rawIdStream.reduce( (stack,tkn) => stack + " " + getToken(tkn) , "" ) ) 
+
 	}
+ 
 
+let src = 'union ( ) { cube ( ) ; } difference ( ) { for ( x = [0:10:20] ) rotate ( [x,0,0,] ) { translate ( [5,0,0] ) { cylinder ( size=5 ) ; } translate ( [90,0,0] ) rotate ( [5,5,5] ) sphere ( r=5 ) ; } }'
 
+	//let src = "start { a ( ) { b ( ) g ( ) { m ( ) j ( ) l ( ) ; } ; c ( ) ; } k ( ) }" 
 
+	let res = smashPunks( src.split(" ") ) 
 
-
-
-
-
-
-
+	//console.log( res ) 
 
 
 /*
@@ -532,42 +569,4 @@ Array.prototype.smap = function(callback) {
 	//})
 
 //.reduce( (stack,tkn) => stack+" "+getToken(tkn) )  
-
-/*rawIdStream = [ 'OZ6XA__||__a',
-  'wv7ub__||__b',
-  '76zn7__||__c',
-  'lover__||__j',
-  'cq7uC__||__d',
-  'w89nn__||__e',
-  'Bz8NP__||__f',
-  'zB3iR__||__g',
-  '9WoiL__||__h',
-  'k0XUz__||__i',
-  'qQnbA__||__j',
-  'lO6qq__||__k' ]
-
-table = [ 'OZ6XA__||__0',
-  'wv7ub__||__1',
-  '76zn7__||__2',
-  'cq7uC__||__3',
-  'w89nn__||__4',
-	'zB3iR__||__6',
-  'Bz8NP__||__5',
-  '9WoiL__||__7',
-  'k0XUz__||__8',
-  'qQnbA__||__9',
-  'lO6qq__||__10' ]
-*/
-
-
-//let src = 'if ( ) difference ( ) { cube ( ) ; translate ( ) sphere ( ) ; } circle ( ) ;' 
-
-
-let src = 'union ( ) { cube ( ) ; } difference ( ) { for ( x = [0:10:20] ) rotate ( [x,0,0,] ) { translate ( [5,0,0] ) { cylinder ( size=5 ) ; } translate ( [90,0,0] ) rotate ( [5,5,5] ) sphere ( r=5 ) ; }  }'
-
-	//let src = "start { a ( ) { b ( ) g ( ) { m ( ) j ( ) l ( ) ; } ; c ( ) ; } k ( ) }" 
-
-	let res = smashPunks( src.split(" ") ) 
-
-	//console.log( res ) 
 
