@@ -1,3 +1,206 @@
+ 
+	/***************************************************************************
+	 *   Copyright (c) Damien Towning         (connolly.damien@gmail.com) 2017 *
+	 *                                                                         *
+	 *   This file is part of the Makertron CSG cad system.                    *
+	 *                                                                         *
+	 *   This library is free software; you can redistribute it and/or         *
+	 *   modify it under the terms of the GNU Library General Public           *
+	 *   License as published by the Free Software Foundation; either          *
+	 *   version 2 of the License, or (at your option) any later version.      *
+	 *                                                                         *
+	 *   This library  is distributed in the hope that it will be useful,      *
+	 *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+	 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+	 *   GNU Library General Public License for more details.                  *
+	 *                                                                         *
+	 *   You should have received a copy of the GNU Library General Public     *
+	 *   License along with this library; see the file COPYING.LIB. If not,    *
+	 *   write to the Free Software Foundation, Inc., 59 Temple Place,         *
+	 *   Suite 330, Boston, MA  02111-1307, USA                                *
+	 *                                                                         *
+	 ***************************************************************************/
+
+	"use strict";   
+	/*global require,console,__dirname,Buffer*/
+	/*jshint -W069 */ 
+	var lodash = require('lodash') 
+	var fs = require("fs");
+
+	// ----------------------------------------------------------
+	// Lex the input string against rules 
+	// ----------------------------------------------------------
+	let preProcess = buffer => { 
+ 
+		let expressions = [ /([\t])/g , /(\{)/ , /(\})/ , /(\()/ , 
+												/(\))/ , /(\[)/ , /(\])/ , 
+												/(\;)/ , /(\:)/ , /(\=)/ , 
+												/(\+)/ , /(\-)/ , /(\*)/ , 
+												/(\<)/ , /(\/)/ , /(\,)/ , 
+												/(module)/, /\n/] 
+
+		buffer = buffer.split(/ /)
+
+		expressions.forEach( (regExp) => {
+			buffer = lodash.flatten(buffer.map( tkn => tkn.split(regExp)))  	
+		}) 
+
+		return buffer.filter( tkn => tkn !== '' ? true : false )   
+
+	}
+
+	// --------------------------------------------------------
+	// Generate a hashed string
+	// --------------------------------------------------------
+	let makeId = () => { 
+		let i = 0 
+		let text = "";
+		let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for( i=0; i < 5; i++ )
+		text += possible.charAt(Math.floor(Math.random() * possible.length));
+		return text;
+	}
+
+	// --------------------------------------------------------
+	// Is this token an operation 
+	// --------------------------------------------------------
+	let isToken = tkn => {			
+		return operations.reduce( (stack,op) => op === tkn ? stack = true : stack , false )  
+	}
+	
+	// --------------------------------------------------------
+	// Is this token closure / compound related
+	// --------------------------------------------------------
+	let isClosure = tkn => 
+		tkn === ";" ||
+		tkn === "}" ||
+		tkn === "{" 
+			? true : false 		
+	
+	// --------------------------------------------------------
+	// Tokens : find matching closure 
+	// --------------------------------------------------------
+	let findPair = lft => rt => lftCount => rtCount => index => lst => pullThrough => { 
+		pullThrough(lst[index]) === lft ? lftCount++ : lftCount  
+		pullThrough(lst[index]) === rt ? rtCount++ : rtCount  
+		return ( index > lst.length ) ? -1 
+			: ( lftCount === 0 && rtCount === 0 ) ? -1 
+			: ( lftCount === rtCount ) ? index 
+			: findPair(lft)(rt)(lftCount)(rtCount)(index+1)(lst)(pullThrough)
+	}
+	
+	// --------------------------------------------------------
+	// Strip unique id from token 		
+	// --------------------------------------------------------
+	String.prototype.getToken = function() { 
+		return ( this !== false && this !== true ) ? this.split("__||__")[1] : false 
+	}
+		
+	// --------------------------------------------------------
+	// Strip token from unique id 		
+	// --------------------------------------------------------	
+	String.prototype.getId = function() {
+		return this.split("__||__")[0]
+	}
+
+	// --------------------------------------------------------
+	// find Id in id tagged stream ( bound this to prototype  ) 
+	// --------------------------------------------------------
+	Array.prototype.findId = function( id ) { 
+			return this.reduce( (stack,tkn,index) => id === tkn.getId() ? stack.concat(index) : stack , [] ) 
+	}
+
+	// ---------------------------------------------------------------
+	// Build list of modules 
+	// ---------------------------------------------------------------
+	let buildModuleList = stream => {
+		let stack = [] 
+		stream.forEach( (element,index) => {
+			if ( element === "module" ) stack.push( stream[index+1] )   
+		})
+		return stack 
+	}
+
+	// --------------------------------------------------------
+	// Consume stream picking out valid operations 
+	// --------------------------------------------------------
+	let consumeStream = ( sObj , tkn , index ) => {
+ 		let sTkn = tkn.getToken()
+		if ( sTkn === ";" || sTkn === "{" ) { 
+			if ( sTkn === ";" ) sObj.root = tkn   
+			sObj.result.push( sObj.stack.reverse() ) 
+				sObj.stack = [] 
+		}		
+		if ( isToken(sTkn) ) { sObj.stack.push( [ tkn , sObj.root] ) }
+		return sObj 
+	}
+		
+	// --------------------------------------------------------
+	// Update good clean closure back in to new stream ( rIs ) 
+	// --------------------------------------------------------
+	let applyMap = ( stack , row , index ) => { 
+		row.forEach( (element,i) => { 
+			if ( i < row.length-1 ) {  
+				let sOff =  findPair("(")(")") // closure we want to match 
+										(0)(0) // helper counting values 
+										(parseInt(stack.rIs.findId(element[0].getId()))+1) // index position + 1
+										(stack.rIs) // you must get the ({},x) type argument that comes after an operation 
+										(tkn => tkn.getToken()) // pull through function 
+				stack.rIs.splice( sOff+1 , 0 , "new__||__{" ) // insert new closure start
+				stack.rIs.splice( parseInt(stack.rIs.findId(element[1].getId()))+1 , 0 , "new__||__}" )// insert new closure end	 
+			}
+		}) 		  
+		return stack 
+	}
+
+	// --------------------------------------------------------------------------
+	// Steps To Heal lazy closure statements such as if ( 1 === 1 ) do_thing(); 
+	// --------------------------------------------------------------------------
+	let healClosure = stream => { 
+		// add lookup id to each token 
+		let rawIdStream = stream.map( tkn => makeId()+"__||__"+tkn ) 
+		// set everything that is not closure or operations to false
+		let idStream = rawIdStream.map( tkn => isToken(tkn.getToken()) || isClosure(tkn.getToken()) ? tkn : false )
+		// filter out all false tokens and then reverse stream 
+		let table = idStream.filter( j => j !== false ? true : false  ).reverse()
+		// Consume tokens to produce new map of new closure 
+		let rMap = table.reduce( consumeStream , { stack : [] , result : [] , root : '' })
+								.result
+									.reduce( (stack,tkn) => tkn.length > 1 ? stack.concat([tkn]) : stack , [])    
+		// apply map of new closure to original stream producing new result  
+		let result =  rMap.reduce( applyMap , {  rIs : rawIdStream } ) 
+										.rIs 
+											.reduce( (stack,tkn) => stack + " " + tkn.getToken() , "" )  
+		return result  
+	}
+ 
+	//let scad = 'union() { cube(); } difference() { for (x=[0:10:20]) rotate ([x,0,0,]) { translate([5,0,0]) { cylinder (size=5); } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } }'
+
+	let scad = fs.readFileSync('test.scad', 'utf8');
+
+	let src = preProcess( scad ) 
+
+	let modules = buildModuleList( src )
+
+	let operations = ["difference","intersection","union",
+										"circle", "sphere","translate",
+										"scale","rotate","cube",
+										"cylinder","linear_extrude","polygon",
+										"polyhedron","echo","for","if","echo"].concat( modules )  
+ 
+	let res = healClosure( src ) 
+	
+	console.log( res )  
+
+
+
+
+
+
+
+
+
+
 //import Parser from 'parser.js' 
 
 //var Parser = require('./parser.js') 
@@ -11,12 +214,11 @@
 //parser.load(str)  
 //parser.start()
 //console.log(parser.dump()) 	 
- 
-var lodash = require('lodash') 
 
-let modules  = ["circle", "sphere","translate","scale","rotate","cube","cylinder","linear_extrude","polygon","polyhedron","echo"] 
 
-let ntokens = [] 
+
+
+
 
 
  /* | ONCE ? CLOSURE : COPY 
@@ -282,6 +484,7 @@ let compare = tkn =>  { return element => { if ( tkn === element ) return true; 
  //																			 compose( cube )( [7] )	
  //                                   ] ) 
 
+
 				/*
 	walkClosure = chnk => rt => i => { 
 				if ( i < chnk.length ) { 
@@ -342,90 +545,10 @@ Array.prototype.smap = function(callback) {
 
 
 			//console.log( tree.filter( a => a.parent !== -1 ? true : false) ) 	
-			
 
-	// --------------------------------------------------------
-	// Generate a hashed string
-	// --------------------------------------------------------
-	makeId = () => { 
-		let i = 0 
-		let text = "";
-		let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		for( i=0; i < 5; i++ )
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
-		return text;
-	}
-	// --------------------------------------------------------
-	// Is this token an operation 
-	// --------------------------------------------------------
-	isToken = tkn => 			
-		tkn === "difference" || 
-		tkn === "union" || 
-		tkn === "rotate" || 
-		tkn === "translate" || 
-		tkn === "sphere" ||
-		tkn === "cube" ||
-		tkn === "circle" || 
-		tkn === "if" ||
-		tkn === "for" 
-			? true : false 		
-		
-	// --------------------------------------------------------
-	// Is this token closure / compound related
-	// --------------------------------------------------------
-	isClosure = tkn => 
-		tkn === ";" ||
-		tkn === "}" ||
-		tkn === "{" 
-			? true : false 		
-		
-	const smashPunks = stream => { 
-		
-		// --------------------------------------------------------
-		// Strip unique id from token 		
-		// --------------------------------------------------------
-		getToken = tkn => ( tkn !== false && tkn !== true ) ? tkn.split("__||__")[1] : false 
-		
-		// --------------------------------------------------------
-		// Strip token from unique id 		
-		// --------------------------------------------------------
-		getId = tkn => tkn.split("__||__")[0]
-
-		Array.prototype.findId = function( id ) { 
-			return this.reduce( (stack,tkn,index) => id === getId(tkn ) ? stack.concat(index) : stack , [] ) 
-		}
-
-		// --------------------------------------------------------
-		// Tokens : find matching closure 
-		// --------------------------------------------------------
-		findPair = lft => rt => lftCount => rtCount => index => lst => { 
-			getToken(lst[index]) === lft ? lftCount++ : lftCount  
-			getToken(lst[index]) === rt ? rtCount++ : rtCount  
-			return ( index > lst.length ) ? -1 
-				: ( lftCount === 0 && rtCount === 0 ) ? -1 
-				: ( lftCount === rtCount ) ? index 
-				: findPair(lft)(rt)(lftCount)(rtCount)(index+1)(lst)
-		}
-
-		// --------------------------------------------------------
-		// Consume stream picking out valid operations 
-		// --------------------------------------------------------
-		let consumeStream = index => root => stack => result => { 	 
-			if ( index < table.length-1 ) { 	
-				sTkn = getToken(table[index])
-				if ( sTkn === ";" || sTkn === "{" )  {  
-					if ( sTkn === ";" ) root = table[index] 
-					result.push( stack.reverse() ) 
-					stack = [] 
-				}
-		  	if ( isToken(sTkn) ) { stack.push( [table[index] , root] ) } 	
-	    	consumeStream(index+1)(root)(stack)(result)   
-			} 
-		  return result
-		}		
-
-		// Update good clean closure back in to the original stream 
-		updateRawIdStream = index => { 
+/*
+		updateRawIdStream = index => {
+			if ( rMap.length !== 0 ) {  
 			let rTab = rMap[index] 
 			let stepBoom = i => { 				   
 				if ( i < rTab.length-1 ) { 
@@ -440,40 +563,21 @@ Array.prototype.smap = function(callback) {
 			}		
 			stepBoom(0) 		 
 			if ( index < rMap.length-1 ) updateRawIdStream(index+1) 
+			}
 		}
-		
-
-		// add lookup id to each token 
-		let rawIdStream = stream.map( tkn => makeId()+"__||__"+tkn )
- 
-		// set everything that is not closure or operations to false
-		let idStream = rawIdStream.map( tkn => isToken(getToken(tkn)) || isClosure(getToken(tkn)) ? tkn : false )
-
-		// filter out all false tokens and then reverse stream 
-		let table = idStream.filter( j => j !== false ? true : false  ).reverse()
-
-		// Consume tokens 
-		let rMap = consumeStream(0)([])([])([])
-								.reduce( (stack,tkn) => tkn.length > 1 ? stack.concat([tkn]) : stack , [])   
-  	
-		// Update raw stream with updated closure 
-		updateRawIdStream(0) 
-
-		console.log( rawIdStream.reduce( (stack,tkn) => stack + " " + getToken(tkn) , "" ) ) 
-
-	}
- 
-
-let src = 'union ( ) { cube ( ) ; } difference ( ) { for ( x = [0:10:20] ) rotate ( [x,0,0,] ) { translate ( [5,0,0] ) { cylinder ( size=5 ) ; } translate ( [90,0,0] ) rotate ( [5,5,5] ) sphere ( r=5 ) ; } }'
-
-	//let src = "start { a ( ) { b ( ) g ( ) { m ( ) j ( ) l ( ) ; } ; c ( ) ; } k ( ) }" 
-
-	let res = smashPunks( src.split(" ") ) 
-
-	//console.log( res ) 
-
-
-/*
+		let consumeStream = index => root => stack => result => { 	 
+			if ( index < table.length-1 ) { 	
+				sTkn = getToken(table[index])
+				if ( sTkn === ";" || sTkn === "{" )  {   
+					if ( sTkn === ";" ) root = table[index]   
+					result.push( stack.reverse() )  
+					stack = [] 
+				}
+		  	if ( isToken(sTkn) ) { stack.push( [table[index] , root] ) } 	
+	    	consumeStream(index+1)(root)(stack)(result)   
+			} 
+		  return result
+		}		
 	// --------------------------------------------------------
 		// Tokens : find matching closure 
 		// --------------------------------------------------------
@@ -569,4 +673,11 @@ let src = 'union ( ) { cube ( ) ; } difference ( ) { for ( x = [0:10:20] ) rotat
 	//})
 
 //.reduce( (stack,tkn) => stack+" "+getToken(tkn) )  
+
+
+
+/*“So there it is", said Pooh, when he had sung this to himself three times "It's come
+different from what I thought it would, but it's come. Now I must go and sing it to
+Piglet.”*/ 
+
 
