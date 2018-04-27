@@ -61,9 +61,9 @@
 		return text;
 	}
 
-	// --------------------------------------------------------
-	// Is this token an operation 
-	// --------------------------------------------------------
+	// -----------------------------------------------------------------
+	// Is this token an operation // operations is currently global :( 
+	// -----------------------------------------------------------------
 	let isToken = tkn => {			
 		return operations.reduce( (stack,op) => op === tkn ? stack = true : stack , false )  
 	}
@@ -104,14 +104,14 @@
 	}
 
 	// --------------------------------------------------------
-	// find Id in id tagged stream ( bound this to prototype  ) 
+	// find Id in id tagged stream 
 	// --------------------------------------------------------
 	Array.prototype.findId = function( id ) { 
 			return this.reduce( (stack,tkn,index) => id === tkn.getId() ? stack.concat(index) : stack , [] ) 
 	}
 
 	// ---------------------------------------------------------------
-	// Build list of modules 
+	// Build list of modules from stream 
 	// ---------------------------------------------------------------
 	let buildModuleList = stream => {
 		let stack = [] 
@@ -136,7 +136,7 @@
 	}
 		
 	// --------------------------------------------------------
-	// Update good clean closure back in to new stream ( rIs ) 
+	// Update modified closure back in to new stream ( rIs ) 
 	// --------------------------------------------------------
 	let applyMap = ( stack , row , index ) => { 
 		row.forEach( (element,i) => { 
@@ -154,7 +154,7 @@
 	}
 
 	// --------------------------------------------------------------------------
-	// Steps To Heal lazy closure statements such as if ( 1 === 1 ) do_thing(); 
+	// Steps To Heal lazy closure statements such as 'translate() sphere();' 
 	// --------------------------------------------------------------------------
 	let healClosure = stream => { 
 		// add lookup id to each token 
@@ -170,13 +170,65 @@
 		// apply map of new closure to original stream producing new result  
 		let result =  rMap.reduce( applyMap , {  rIs : rawIdStream } ) 
 										.rIs 
-											.reduce( (stack,tkn) => stack + " " + tkn.getToken() , "" )  
+											.reduce( (stack,tkn) => stack.concat( tkn.getToken() ) , [] ) 
 		return result  
 	}
- 
-	//let scad = 'union() { cube(); } difference() { for (x=[0:10:20]) rotate ([x,0,0,]) { translate([5,0,0]) { cylinder (size=5); } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } }'
 
-	let scad = fs.readFileSync('test.scad', 'utf8');
+	let reformatFunctions = stream => { 
+		
+	}
+
+	
+	let buildTree = set => start => end => parent => {
+	  
+		let iterate = index => res => { 
+			let tkn = set[index]
+			if ( isToken(tkn) ) {  
+				let s = findPair('(')(')')(0)(0)(index+1)(set)(tkn=>tkn)+1
+				if ( set[s] === "{" ) { 
+					let e = findPair('{')('}')(0)(0)(s)(set)(tkn=>tkn) 
+					index = e 
+					let id = makeId()
+					res.push( { 'parent' : parent , 'token': tkn , 'id' : id  }) 
+					buildTree(set)(s+1)(e)(id)
+				}
+				res.push( { 'parent' : parent , 'token': tkn }) 
+			}
+			if ( index < end ) iterate( index + 1 )(res) 
+			return res  
+		}
+
+		console.log(iterate( start )([]))   
+		
+
+	} 
+
+	// ----------------------------------------------------------------------
+	// convert module declarations to js functions 
+	// ----------------------------------------------------------------------
+	let reFormatModules = stream => { 
+		let result = [] 
+		let iterate = index => { 
+			if ( stream[index] === "module" ) {
+				result.push( "let" , stream[index+1] , "=" , "function" ) 	
+				index+=2 	
+			}
+			result.push( stream[index] ) 
+			if ( index < stream.length ) iterate(index+1) 
+		}
+		iterate(0) 
+		return result 
+	} 
+
+	let reformatLoops = stream => { 
+	}
+ 
+	let reformatVariables = stream => { 
+	}
+ 
+	let scad = 'union() { cube (); } difference() { for (x=[0:10:20]) rotate ([x,0,0,]) { translate([5,0,0]) { cylinder (size=5); } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } }'
+
+	//let scad = fs.readFileSync('test.scad', 'utf8');
 
 	let src = preProcess( scad ) 
 
@@ -186,12 +238,58 @@
 										"circle", "sphere","translate",
 										"scale","rotate","cube",
 										"cylinder","linear_extrude","polygon",
-										"polyhedron","echo","for","if","echo"].concat( modules )  
+										"polyhedron","echo","for","if","echo","colour","color"].concat( modules )  
  
-	let res = healClosure( src ) 
-	
-	console.log( res )  
+	let res = reFormatModules( healClosure( src ) ) 
 
+	let streamToString = stream => stream.reduce( (stack,tkn) => stack + tkn + " ", '' )   
+
+	buildTree(res)(0)(res.length)(makeId()) 
+
+  
+
+	//console.log( streamToString(res) ) 
+
+	/*difference() {  
+		for ( x = [ 0 : 10 : 20 ] ) { 
+			translate([x,0,0]) { 
+				sphere(r=5);
+			}
+		}
+	}*/
+
+		
+	//let difference = (...args) => (...child) => " difference ( " + args + " " + child + " ) " 
+	//let translate  = (...args) => (...child) => " translate ( " + args + " , " + child + " ) "
+	//let sphere     = (...args) => (...child) => " sphere ( " + args + " " + child + " ) "  
+
+	//let r = [ 0 , difference() , 0 , translate([1,2,3]) , sphere(5) , 0 ,  translate([4,5,6]) , sphere(5) ] 
+	
+	//console.log( output ) 
+
+	//let stream = [ "{" , "{" , "{" , "}" , "}" , "}" ] 
+
+	
+
+ //const compose = (...functions) => (...data) => functions.reduceRight((value, func) => func(value), data)
+ 
+ /*const end = (...args) => (obj) => "end"  
+
+ const cube = (...args) => (obj) => "{ cube: '"+args[0]+"' , child: '" +obj+"'}"
+
+ const sphere = (...args) => (obj) => "{ sphere: '"+args[0]+"' , child: '" +obj+"'}"
+
+ const translate = (...args) => (obj) => "{ vector: '"+args[0]+"' , child: "+obj+"}"   
+ 	 
+ const difference = (...args) => (obj) => args[0].reduce( ( result , line ) => result + "--" + line )    
+
+ const compose = (...func) => (...args) => func.reduce( ( value , f , i) =>  i === 1 ? f( args[i] )( value(args[0])() ) : f( args[i] )(value) )  
+  */
+ //let res = compose ( difference )(  [
+ //                                      compose( sphere , translate )( [5] , [1,2,3] ),
+ //																			 compose( cube )( [7] ), 
+ //																			 compose( cube )( [7] )	
+ //                                   ] ) 
 
 
 
@@ -465,7 +563,7 @@ let compare = tkn =>  { return element => { if ( tkn === element ) return true; 
 	//console.log( res ) 
  //const compose = (...functions) => (...data) => functions.reduceRight((value, func) => func(value), data)
  
- const end = (...args) => (obj) => "end"  
+ /*const end = (...args) => (obj) => "end"  
 
  const cube = (...args) => (obj) => "{ cube: '"+args[0]+"' , child: '" +obj+"'}"
 
@@ -477,7 +575,7 @@ let compare = tkn =>  { return element => { if ( tkn === element ) return true; 
 
  const compose = (...func) => (...args) => 
   func.reduce( ( value , f , i) =>  i === 1 ? f( args[i] )( value(args[0])() ) : f( args[i] )(value) )  
-  
+  */
  //let res = compose ( difference )(  [
  //                                      compose( sphere , translate )( [5] , [1,2,3] ),
  //																			 compose( cube )( [7] ), 
