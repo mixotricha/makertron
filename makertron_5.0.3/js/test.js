@@ -31,7 +31,6 @@
 	// Lex the input string against rules 
 	// ----------------------------------------------------------
 	let preProcess = buffer => { 
- 
 		let expressions = [ /([\t])/g , /(\{)/ , /(\})/ , /(\()/ , 
 												/(\))/ , /(\[)/ , /(\])/ , 
 												/(\;)/ , /(\:)/ , /(\=)/ , 
@@ -40,13 +39,10 @@
 												/(module)/, /\n/] 
 
 		buffer = buffer.split(/ /)
-
 		expressions.forEach( (regExp) => {
 			buffer = lodash.flatten(buffer.map( tkn => tkn.split(regExp)))  	
 		}) 
-
 		return buffer.filter( tkn => tkn !== '' ? true : false )   
-
 	}
 
 	// --------------------------------------------------------
@@ -175,33 +171,8 @@
 	}
 
 	let reformatFunctions = stream => { 
-		
 	}
 
-	
-	let buildTree = set => start => end => parent => {
-	  
-		let iterate = index => res => { 
-			let tkn = set[index]
-			if ( isToken(tkn) ) {  
-				let s = findPair('(')(')')(0)(0)(index+1)(set)(tkn=>tkn)+1
-				if ( set[s] === "{" ) { 
-					let e = findPair('{')('}')(0)(0)(s)(set)(tkn=>tkn) 
-					index = e 
-					let id = makeId()
-					res.push( { 'parent' : parent , 'token': tkn , 'id' : id  }) 
-					buildTree(set)(s+1)(e)(id)
-				}
-				res.push( { 'parent' : parent , 'token': tkn }) 
-			}
-			if ( index < end ) iterate( index + 1 )(res) 
-			return res  
-		}
-
-		console.log(iterate( start )([]))   
-		
-
-	} 
 
 	// ----------------------------------------------------------------------
 	// convert module declarations to js functions 
@@ -219,13 +190,37 @@
 		iterate(0) 
 		return result 
 	} 
+	
+	// ----------------------------------------------------------------------------------
+	// Bulds linked list of 'pure' openscad instructions excluding non pure instructions
+	// ----------------------------------------------------------------------------------
+	let buildTree = (set,start,end,parent) => {
+	  let stack = [] 
+		let iterate = (index) => { 
+			let tkn = set[index]
+			let id = makeId()
+			if ( isToken(tkn) && tkn !== "for" ) {  
+				stack.push( { index : index , id : id , token : tkn , parent : parent } ) 
+				let s = findPair('(')(')')(0)(0)(index+1)(set)(tkn=>tkn)+1
+				if ( set[s] === "{" ) {
+					let e = findPair('{')('}')(0)(0)(s)(set)(tkn=>tkn) 
+					index = e 
+					stack.push( buildTree(set,s+1,e,id) )  
+				}
+			}
+			if ( index < end-1 ) iterate( index + 1 )
+		}
+		iterate( start )
+		return lodash.flatten(stack) 
+	} 
+
 
 	let reformatLoops = stream => { 
 	}
  
 	let reformatVariables = stream => { 
 	}
- 
+
 	let scad = 'union() { cube (); } difference() { for (x=[0:10:20]) rotate ([x,0,0,]) { translate([5,0,0]) { cylinder (size=5); } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } }'
 
 	//let scad = fs.readFileSync('test.scad', 'utf8');
@@ -238,18 +233,67 @@
 										"circle", "sphere","translate",
 										"scale","rotate","cube",
 										"cylinder","linear_extrude","polygon",
-										"polyhedron","echo","for","if","echo","colour","color"].concat( modules )  
+										"polyhedron","for","if","echo","colour","color"].concat( modules )  
+  
+	let exclude = [ "for","if" ] 
  
 	let res = reFormatModules( healClosure( src ) ) 
 
 	let streamToString = stream => stream.reduce( (stack,tkn) => stack + tkn + " ", '' )   
 
-	buildTree(res)(0)(res.length)(makeId()) 
-
-  
-
 	//console.log( streamToString(res) ) 
 
+	let stack = [] 
+	let start = () => '{' 
+	let end = () => '}' 
+	let union = (...args) => 'union('+args+')' 
+	let difference = (...args) => 'difference('+args+')' 
+	let translate = (...args) => 'translate('+args+')' 
+	let rotate = (...args) => 'rotate('+args+')' 
+ 	let cube = (...args) => 'cube('+JSON.stringify(args)+')' 
+	let sphere = (...args) => 'sphere('+JSON.stringify(args)+')' 
+	let cylinder = (...args) => 'cylinder('+JSON.stringify(args)+')' 
+
+	let test = () => { 
+		stack.push( cylinder ( {size :5 }) )  
+	}
+
+	stack.push(union()) 
+	stack.push(start()) 
+	stack.push(cube())  
+	stack.push(end()) 
+	stack.push(difference())  
+  stack.push(start())     
+		for ( let x = 0 ; x <= 20 ; x+=10  ) { 
+			stack.push( rotate ( [ x , 0 , 0 , ] )) 
+      stack.push( start() )   
+			stack.push( translate ( [ 5 , 0 , 0 ] ))  
+      stack.push( start() )   
+			test();   
+			stack.push( end() )  
+			stack.push( end() )  
+			stack.push( translate([ 90 , 0 , 0 ] ))  
+      stack.push( start() )  
+			stack.push( rotate ([ 5 , 5 , 5 ] ) )  
+      stack.push( start() )  
+			stack.push( sphere ( {r : 5} ) )  
+			stack.push( end() )  
+			stack.push( end() )   
+		} 
+	stack.push( end() )    
+
+	console.log( streamToString(stack) ) 
+
+	//let m = buildTree(res,0,res.length-1,makeId(),'root')  
+	//let poop = res.map( (tkn,index) => { 	
+
+	//let row = m.reduce( (result,tkn) => tkn.index===index ? tkn : result , false)  
+	//	return row !== false ? tkn+"("+row.id+","+row.parent+")" : tkn 
+ 	//}) 
+
+
+	//console.log( streamToString(poop) ) 
+	
 	/*difference() {  
 		for ( x = [ 0 : 10 : 20 ] ) { 
 			translate([x,0,0]) { 
