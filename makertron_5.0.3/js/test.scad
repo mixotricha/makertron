@@ -1,3 +1,4 @@
+module root() = { 
 
 debug = true;
 
@@ -74,4 +75,6 @@ module helpers() {
 }
 
 echo(version=version());
+
+} 
 
