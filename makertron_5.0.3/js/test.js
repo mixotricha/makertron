@@ -82,39 +82,18 @@
 	}
 	
 	// =============================================================
-	// steer through a json data structure 
+	// enumerate through a json data structure 
 	// =============================================================
-	const steer = ( data , task , eva ) => {
+	const enumerate = ( data , task , eva ) => {
 		task( data )  
 		data.state = eva( data ) 
-		return data.state ? steer ( data , task , eva ) : data  
+		return data.state ? enumerate ( data , task , eva ) : data  
 	}
 
 	// =========================================================================================
 	// Convert stream to string 
 	// =========================================================================================
 	const streamToString = stream => stream.reduce( (stack,tkn) => stack + tkn + " ", '' )  
-
-	// =========================================================================================
-	// Strip unique id from token 		
-	// =========================================================================================
-	String.prototype.getToken = function() { 
-		return ( this !== false && this !== true ) ? this.split("__||__")[1] : false 
-	}
-
-	// =========================================================================================
-	// Strip token from unique id 		
-	// =========================================================================================
-	String.prototype.getId = function() {
-		return this.split("__||__")[0]
-	}
-
-	// =========================================================================================
-	// find Id in id tagged stream 
-	// =========================================================================================
-	Array.prototype.findId = function( id ) { 
-			return this.reduce( (stack,tkn,index) => id === tkn.getId() ? stack.concat(index) : stack , [] ) 
-	}
 
 	// =========================================================================================
 	// Build list of modules from stream 
@@ -127,66 +106,6 @@
 		return stack 
 	}
 
-	// =========================================================================================
-	// Heal lazy closure statements such as 'translate() sphere();' -> translate() { sphere(); } 
-	// =========================================================================================
-	const healClosure = stream => { 
-
-		// --------------------------------------------------------
-		// Consume stream picking out valid operations 
-		// --------------------------------------------------------
-		const consumeStream = ( sObj , tkn , index ) => {
-	 		const sTkn = tkn.getToken()
-			if ( sTkn === ";" || sTkn === "{" ) { 
-				if ( sTkn === ";" ) sObj.root = tkn   
-				sObj.result.push( sObj.stack.reverse() ) 
-				sObj.stack = [] 
-			}		
-			if ( isToken(sTkn,genOps) || isToken(sTkn,csgOps) || isToken(sTkn,modOps) ) { 
-				sObj.stack.push( [ tkn , sObj.root] ) 
-			}
-			return sObj 
-		}
-
-		// ---------------------------------------------------------------
-		// Update modified closure back in to new stream ( rawIdStream ) 
-		// --------------------------------------------------------------
-		const applyMap = ( stack , row , index ) => { 
-			row.forEach( (element,i) => { 
-				if ( i < row.length-1 ) {  
-					const sOff =  findPair("(",")", // closure we want to match 
-											0,0, // helper counting values 
-											parseInt(stack.rIs.findId(element[0].getId()))+1, // index position + 1
-											stack.rIs, // you must get the ({},x) type argument that comes after an operation 
-											tkn => tkn.getToken()) // pull through function 
-					stack.rIs.splice( sOff+1 , 0 , "new__||__{" ) // insert new closure start
-					stack.rIs.splice( parseInt(stack.rIs.findId(element[1].getId()))+1 , 0 , "new__||__}" )// insert new closure end	 
-				}
-			}) 		  
-			return stack 
-		}
-
-		// add lookup id to each token 
-		const rawIdStream = stream.map( tkn => makeId()+"__||__"+tkn ) 
-		// set everything that is not closure or operations to false
-		const idStream = rawIdStream.map( tkn => isToken(tkn.getToken(),genOps) || 
-																						 	isToken(tkn.getToken(),csgOps) ||
-																							 isToken(tkn.getToken(),modOps) ||			 
-																								isToken(tkn.getToken(),cloOps) ? tkn : false )
-		// filter out all false tokens and then reverse stream 
-		const table = idStream.filter( j => j !== false ? true : false  ).reverse()
-		// Consume tokens backwards from ; to produce new map of new closure 
-		const rMap = table.reduce( consumeStream , { stack : [] , result : [] , root : '' })
-								.result
-									.reduce( (stack,tkn) => tkn.length > 1 ? stack.concat([tkn]) : stack , [])    
-		// apply map of new closure to original stream producing new result. rIs is rawIdStream  
-		const result =  rMap.reduce( applyMap , {  rIs : rawIdStream } ) 
-										.rIs 
-											.reduce( (stack,tkn) => stack.concat( tkn.getToken() ) , [] ) 
-		return result  
-
-	}
-
 	// ======================================================
 	// convert function declarations to js functions 
 	// ======================================================
@@ -197,52 +116,39 @@
 	// convert module declarations to js functions 
 	// =======================================================
 	const reformatModules = stream => { 
-
-		// -----------------------------------------------------
-		// steer task func
-		// -----------------------------------------------------
+		// *** enumerate task func
 		const task = (data) => { 
-			const tknA = data.stream[data.index].tkn
-			const tknB = data.stream[data.index+1].tkn
-
-			if ( tknA === "module" ) {
-					
-				//const end = findPair('(',')',0,0,data.index+2,data.stream,tkn=>tkn)
-				//const args = data.stream.slice(  data.index + 3 , end ) 
-				//data.result.push( "let" , data.stream[data.index+1] , "=" , "(" , "{" )				
-				//data.result = data.result.concat(args)  
-				//data.result.push( "}" , ")" )  	
-				//data.index=end+1  	  
+			let rowA = data.stream[data.index]
+			let rowB = data.stream[data.index+1] 
+			if ( rowA.tkn === "module" ) {
+				//rowB.id = rowA.id 
+				rowB.parent = rowA.parent
+				rowB.head = [ 'const' , rowB.tkn , '=' ]  
+				rowB.tail - '' 	
+				rowA.tkn = ''					
+				rowA.id = ''
+				rowA.parent = ''
+				data.stream[data.index] = rowA
+			  data.stream[data.index+1] = rowB 			
 			}
-			//data.result.push( data.stream[data.index] ) 
-			//data.index++ 
+			data.index++ 
 			return data 
 		} 
-
-		// -------------------------------
-		// steer eval func 
-		// -------------------------------
+		// *** enumerate end condition 
 		const eva = (data) => { return data.index < data.len ? true : false }
-
-		return steer ( { index : 0 , stream : stream , len : stream.length-1 , state : true , result : [] } , task , eva ).result 
+		return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva )
+			.stream.reduce( (stack,row) => row.tkn !== '' ? stack.concat(row) : stack ,[])  
 	} 
 
 	// ==================================================
 	// Reformat calls to functions to be of a jsn format 
 	// ==================================================
 	const reformatCalls = stream => { 
-
-		// ------------------------------------------------------------------
-		// Take arguments to function and split up in to array
-		// ------------------------------------------------------------------
+		// *** Take arguments to function and split up in to array
 		const argumentsToJson = (stream) => {
-
 			let parameters = stream.slice( 1 , stream.length-1 ) 
 			if ( parameters.length === 0 ) return ['{','}']  
-
-			// --------------------------------------		
-			// steer function for argumentsToJson
-			// --------------------------------------
+			//  *** enumerating task for argumentsToJson
 			let consumeDepth = (data) => {
 				const tkn = data.parameters[data.index] 
 				if ( tkn === data.lft ) { data.e = findPair(data.lft,data.rht,0,0,data.index,data.parameters,tkn=>tkn) }
@@ -250,17 +156,13 @@
 				data.index++ 
 				return data
 			} 
-
-			// --------------------------------------
-			// eval function for steer for argumentsToJson	
-			// --------------------------------------
+			//  enumerating condition for enumerate for argumentsToJson	
 			let evaConsumeDepth = (data) => { return data.index < data.len ? true : false }
-
-			parameters = steer({ state:true , index: 0 , lft: '(' , rht: ')' , e: 0 , 
+			parameters = enumerate({ state:true , index: 0 , lft: '(' , rht: ')' , e: 0 , 
 				parameters: parameters , len: parameters.length-1 } , consumeDepth , evaConsumeDepth ).parameters 
-			parameters = steer({ state:true , index: 0 , lft: '[' , rht: ']' , e: 0 , 
+			parameters = enumerate({ state:true , index: 0 , lft: '[' , rht: ']' , e: 0 , 
 				parameters: parameters , len: parameters.length-1 } , consumeDepth , evaConsumeDepth ).parameters 
-		  parameters = steer({ state:true , index: 0 , lft: '{' , rht: '}' , e: 0 , 
+		  parameters = enumerate({ state:true , index: 0 , lft: '{' , rht: '}' , e: 0 , 
 				parameters: parameters , len: parameters.length-1 } , consumeDepth , evaConsumeDepth ).parameters 
 			parameters = [","].concat( parameters ) // since all valid expressions begin with comma add one for first expression 
 			// build index of tkn after ',' Is next token followed by relation or is it something else? 
@@ -272,10 +174,7 @@
 			})	
 			return ['{'].concat(parameters.map( tkn => tkn.replace("|||||",'')).slice(1,parameters.length).concat(['}'])) 
 		}
-
-		// ----------------------------------------------------------------
-		// steer function for reformatCalls
-		// ----------------------------------------------------------------
+		// *** enumerating task for reformatCalls
 		const task = (data) => { 
 			let args = data.stream[data.index].args 
 			const tkn = data.stream[data.index].tkn 
@@ -285,106 +184,69 @@
 			data.index++
 			return data
 		} 
-
-		// --------------------------------------
-		// eval function for reformatCalls
-		// --------------------------------------
+		// *** enumerating condition for reformatCalls
 		const eva = (data) => { return data.index < data.len ? true : false }
-
-		return steer( { state:true , index : 0 , stream: stream , len: stream.length } , task , eva ).stream  
+		return enumerate( { state:true , index : 0 , stream: stream , len: stream.length } , task , eva ).stream  
 	}
 
 	// =============================================================================
-	// Reformats for loops in to js format. Does not handle forEach equivalents yet
+	// Reformats for loop(s) in to js format. Does not handle forEach equivalents yet
 	// =============================================================================
 	const reformatLoops = stream => { 
-	 	// --------------------------------------------------
-		// steering task 
-		// --------------------------------------------------
+		// *** enumerateing task 
 		const task = (data) => { 
-			const tkn = data.stream[data.index] 
-			if ( tkn === "for" ) { 
-				const end = findPair("(",")",0,0,data.index+1,data.stream,tkn=>tkn)
- 				const variable = data.stream[ data.index+2 ] 
-				const fields = data.stream.slice( data.index+5 , end-1 ).reduce( (stack,tkn) => tkn !== ":" ? stack.concat(tkn) : stack ,[]) 
+			const rowA = data.stream[data.index] 
+			if ( rowA.tkn === "for" ) { 
+				const args = rowA.args			
+ 				const variable = args[1] 
+				const fields = args.slice( 4 , args.length )
+					.reduce( (stack,tkn) => tkn !== ":" && tkn !== ")" && tkn !== "]" ? stack.concat(tkn) 
+						: stack ,[])  
 				if ( fields.length === 2 ) { // [0:10]
-					fields[0] < fields[1] ?
-						data.result.push("for","(", variable , "=" , fields[0] , ";" , variable , "<=" , fields[1] , ";" , variable , "++" , ")" )// + 
-						: data.result.push("for","(", variable , "=" , fields[0] , ";" , variable , ">=" , fields[1] , ";" , variable , "--" , ")" )//-   		
+					data.stream[data.index].args = fields[0] < fields[1] ?
+						 [ variable , "=" , fields[0] , ";" , variable , "<=" , fields[1] , ";" , variable , "++"  ]// + 
+						: [ variable , "=" , fields[0] , ";" , variable , ">=" , fields[1] , ";" , variable , "--" ]//-   		
 				} 
 				if ( fields.length === 3 ) { //  [0:45:360]
-					fields[0] < fields[2] ?
-						data.result.push("for","(", variable , "=" , fields[0] , ";" , variable , "<=" , fields[2] , ";" , variable , "+=" , fields[1] , ")" )//+ 
-						: data.result.push("for","(", variable , "=" , fields[0] , ";" , variable , ">=" , fields[2] , ";" , variable , "-=" , fields[1] , ")" )//-   
+					data.stream[data.index].args = fields[0] < fields[2] ?
+						[ variable , "=" , fields[0] , ";" , variable , "<=" , fields[2] , ";" , variable , "+=" , fields[1]  ]//+ 
+						: [ variable , "=" , fields[0] , ";" , variable , ">=" , fields[2] , ";" , variable , "-=" , fields[1] ]//-   
 				}  
 				// if fields.length != 2 || 3 are we a forEach? will contain , values if we are
-				data.index = end 											 
-			}
-			else { 
-				data.result.push( data.stream[data.index] ) 
 			}
 			data.index++
 			return data 
 		}
-
-		// -------------------------------------------------
-		// steering condition 
-		// -------------------------------------------------
+		// *** enumerateing condition 
 		let eva = (data) => { return data.index < data.len ? true : false }
-
-		return steer( { index: 0 , stream : stream , len : stream.length-1 , state: true , result : [] },task,eva).result
+		return enumerate( { index: 0 , stream : stream , len : stream.length , state: true  },task,eva).stream 
 	}
 
-	// =============================================================================
-	// 
-	// =============================================================================
+ 	// =======================================================
+	// convert module declarations to js functions 
+	// =======================================================
 	const reformatCsgOps = stream => {  
-	
-		const mapOps = (data) => { 
-			const tkn = data.stream[data.index]
-			if ( isToken(tkn,csgOps) ) { 
-				let st = -1 
-				let en = -1 
-				st = findPair("(",")",0,0,data.index+1,data.stream,tkn=>tkn)
-				en = findPair("{","}",0,0,st+1,data.stream,tkn=>tkn)  
-				if ( st === 51 ) console.log( stream[st+1] , en )  						  
-				data.result = data.result.concat( { op : data.index , st : st , end: en } ) 
-			} 
-			data.index++
-			return data
-		}
- 
-		// -------------------------------------------------
-		// steering condition 
-		// -------------------------------------------------
-		let eva = (data) => { return data.index < data.len ? true : false }
-			
-		let res = steer( { state: true , index : 0 , stream: stream , len: stream.length-1 , result: [] } , mapOps , eva ).result 
-
-		res.forEach( entry => { 
-		
-			stream[entry.op] = ['stack.push' , '(' , stream[entry.op] ]   
-			stream[entry.st] = [ ')' , ')' ] 
-
-			if ( entry.end !== -1 ) {  
-				stream[entry.st+1] = [  'start' , '(' , ')' ] 	 	
-				stream[entry.end] = [ 'end' , '(' , ')' ] 
+		// *** enumerate task func
+		const task = (data) => { 
+			let rowA = data.stream[data.index]
+			if ( isToken(rowA.tkn,csgOps) ) {			
+				rowA.head = [ 'stack.push(' , rowA.tkn ]  
+				rowA.tail = [')'] 	
+				data.stream[data.index] = rowA
 			}
-		  
-		})   
-
-	 	return lodash.flatten(stream)   
-	}
- 
+			data.index++ 
+			return data 
+		} 
+		// *** enumerate end condition 
+		const eva = (data) => { return data.index < data.len ? true : false }
+		return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
+	} 
 
 	// =============================================================================
 	// Bulds Par/Child linked list of operations
 	// =============================================================================
 	const buildFullTree = (stream) => {
-
-		// ----------------------------------------
-		// Fold arguments in to each operation row 
-		// ----------------------------------------  
+		// *** Fold arguments in to each operation row 
 		const foldInArgs = (data) => {
 				const tkn = data.stream[data.index]  
 				let args = ''
@@ -399,34 +261,30 @@
 								data.index = end 
 						 }
 				} 
-				data.result = data.result.concat( { 'lup': data.index , 'id': makeId() , 'parent': '' , 'tkn': tkn , args: args } )
+				data.result = data.result.concat( {  'id': makeId() , children: false , 'parent': '' , head: '', 'tkn': tkn , tail: '' , closure:[], args: args } )
 				data.index++ 
 				return data 
 		}
-
-		// ----------------------------------------
-		// Build parent / child relationship graph 
-		// ----------------------------------------
+		// *** Build parent / child relationship graph 
 		const buildRelations = (data) => { 
 			const rowA = data.table[data.index]
 			const tknA = rowA.tkn
 			const rowB = data.table[data.index+1] // now needs to pick up offset somehow 
 			const tknB = rowB.tkn 
-			if ( isToken(tknA,csgOps) || isToken(tknA,genOps) || isToken(tknA,modOps) ) { 	
+			if ( isToken(tknA,csgOps) || isToken(tknA,genOps) || isToken(tknA,modOps) ) { 	//is operation
 				if ( tknB === "{" ) { 	
-					data.table = setChildren(data.table,rowA.id,'{','}',data.index)
+					data.table = setChildren(data.table,rowA.id,'{','}',data.index) // has closure 
+					data.table[data.index].children = true 		
 				}					
-				if( isToken(tknB,csgOps) || isToken(tknB,genOps) || isToken(tknB,modOps) ) { 
-					data.table[data.index+1].parent = rowA.id 
+				if( isToken(tknB,csgOps) || isToken(tknB,genOps) || isToken(tknB,modOps) ) { // is another operation 
+					data.table[data.index+1].parent = rowA.id
+					data.table[data.index].children = true  
 				}
 			}
 			data.index++ 
 			return data 
 		}
-
-		// ---------------------------------------------
-		// Set group of children within {} to parent id 
-		// ---------------------------------------------
+		// *** Set group of children within {} to parent id 
 		const setChildren = (table,id,lft,rht,st) => { 
 			const end = findPair(lft,rht,0,0,st+1,table,rec=>rec.tkn) 
 			if ( end !== -1 ) { 
@@ -436,37 +294,94 @@
 			}
 			return table 
 		}
-
+		// *** enumerate end condition 
 		const eva = (data) => { return data.index < data.len ? true : false }
-
-		const table = steer( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , foldInArgs , eva ).result 
-
-		const relations = steer( { state : true , index: 0 , table: table , len: table.length-1 } , buildRelations , eva )
+		const table = enumerate( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , foldInArgs , eva ).result 
+		return enumerate( { state : true , index: 0 , table: table , len: table.length-1 } , buildRelations , eva )
 			.table
 				.reduce( (stack,row) => 
 						isToken(row.tkn,csgOps) || 
 							isToken(row.tkn,genOps) || 
-							isToken(row.tkn,modOps) ? stack.concat(row) : stack ,[])
-  
-	
-		return relations 
-		 
-
+							isToken(row.tkn,modOps) ? stack.concat(row) : stack ,[])	 
 	} 
 
 
+	// =======================================
+	// construct code 
+	// =======================================
+	const codeFromTree = (stream) => { 		
+		//console.log( stream.map( (row) => [{ id: row.id , parent: row.parent , children: row.children ,  token: row.tkn }] ) ) 
+		// All terminal nodes as indicated in build tree function by children = false  
+		const terminals = stream.reduce( (stack,row,index) => row.children === false ? stack.concat( index ) : stack , [] )  	
+		// *** enumerate task works from terminals to specified roots to find the 'furthest' child  
+		const task = (data) => { 
+			const row = data.stream[data.index]  
+			if ( row.id === data.id ) { 
+				if ( data.id === data.root ) data.result = true   
+				data.id = row.parent 
+			}	
+			data.index--
+			return data
+		}
+		// *** enumerate end 
+		const eva = (data) => { return data.index >= 0 ? true : false }
+		// iterate through every node specifing as root and handing to enumerate task to see if they own the specified terminal node 
+		let cStack = [] 
+		stream.forEach( row => {
+			let rStack = []   
+			terminals.forEach( term => {  	
+				let state = enumerate( { state : true , root: row.id , id: stream[term].id , index: term , stream: stream , result: [] } , task , eva )
+					.result 
+				 	if ( state === true && row.id !== stream[term].id ) { 
+					rStack.push( stream[term].id ) 
+				}
+			})
+			if ( rStack.length !== 0 ) cStack.push( { root: row.id , term : rStack[rStack.length-1]} )
+		}) 
+		// iterate through stream to find each root and each 'furthest' child. This is where we put our closure  
+		cStack.forEach( pair => { 
+			let csg = false
+			let st = '{' 
+			let en = '}' 
+			stream.forEach( row => {
+					
+				if ( pair.root === row.id ) { 
+					if ( isToken(row.tkn,csgOps) ) { csg = true }
+				}
 
+				if ( csg === true ) { 
+					st = "stack.push(start())" 
+					en = "stack.push(end())" 
+				}
 
+				if ( pair.root === row.id ) { row.tail = row.tail.concat(st) } 
+				if ( pair.term === row.id ) { row.closure = row.closure.concat(en) }
+
+			})	
+		})
+		// generate concat of head tkn argument and tail for each row 
+		stream.forEach( (row) => { 
+			row.result = []
+			if ( row.head.length !== 0 ) {
+				row.result = row.result.concat(row.head) 
+			}
+			else { row.result = row.result.concat(row.tkn) } 
+			row.result = row.result.concat('(',row.args,')') 
+			if ( row.tail.length !== 0 ) { row.result = row.result.concat( row.tail ) }
+			if ( row.closure.length !== 0 ) { row.result = row.result.concat( row.closure.reverse() ) }  
+		}) 
+		return stream.reduce( (output,row) => output += streamToString(row.result) , "" )    
+	} 
 
 	// scad example 
-	const scad = 'module foo () { union ( ) { cube (j=2,m=12,size=[1,2,3],sin(20+6)); } difference() { for (x=[0:10:20]) rotate ([x,0,0]) { translate([5,0,0]) { cylinder (size=5); } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } } }'
+	const scad = 'module foo () { union ( ) { cube (size=0.6); } difference() { if ( 1 === 1 ) for (x=[0:10:20]) rotate ([x,0,0]) { translate([5,0,0]) { if ( 2 === 2 ) { cylinder (size=5); } else { sphere(r=7); } } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } } cube(size=0.4); }'
 
 	//let scad = fs.readFileSync('test.scad', 'utf8');
 
 	const src = preProcess( scad ) 
 
 	// general operations 
-	const genOps = [ "for","if" ,"module"] 
+	const genOps = [ "for","if" ,"else","module"] 
 
 	// constructive solids operations 
 	const csgOps = ["difference","intersection","union",
@@ -482,185 +397,39 @@
 	const modOps = buildModuleList( src )
 
 	// Operations that shall be excluded 	
-	const excOps = [ "for","if" ] 
+	const excOps = [ "for","if" , "else" ] 
 
-	// Generate consistent closure. 
-	// Reformat modules to functions with arguments to json. 
-	// Reformat Loops. 
-	// Reformat function call arguments to json. 
-	// convert all CSG operations to stack pushes 
+	// 1. Generate parent/child tree
+	// 2. Reformat function call arguments to json  
+	// 3. Reformat module format to js functions 
+	// 4. Reformat loops to js loops 
+	// 5. convert all CSG operations to stack pushes 
 	
-	//const res =  reformatCsgOps( reformatCalls( reformatLoops( reformatModules( healClosure( src ) ) ) ) )   
+	const newTree = reformatCsgOps( reformatLoops( reformatModules( reformatCalls( buildFullTree(src) ) ) ) )    
 
-	const res =   reformatCalls( buildFullTree(src) )  
-
-	console.log( res ) 
-
+	// Build new code from tree
+	const result = codeFromTree ( newTree ) 
 	
-	// Now we have a result where we can seperate the CSG from the imperative things 
-	// by building the CSG in to a series of stack pushes and then evaluating the 
-	// whole baboosha 
+	console.log( result ) 
+	
+	// Following is an example of a stack generated by the code above 
 
 	let stack = [] 
 
-	const start = () => '{' 
-	const end = () => '}' 
-	const union = (...args) => ['union','(',args,')'] 
-	const difference = (...args) => ['difference','(',args,')'] 
-	const translate = (...args) => ['translate','(',JSON.stringify(args),')'] 
-	const rotate = (...args) => ['rotate','(',JSON.stringify(args),')'] 
- 	const cube = (...args) => ['cube','(',args,')'] 
-	const sphere = (...args) => ['sphere','(',JSON.stringify(args),')'] 
-	const cylinder = (...args) => ['cylinder','(',JSON.stringify(args),')'] 
-	const Osin = (...args) => ['Osin','(',JSON.stringify(args),')'] 
-
-	//console.log( streamToString(lodash.flatten(res)) ) 
-
-	/*stack.push(union()) 
-	stack.push(start()) 
-		stack.push(cube ( { j : 3 , m : 12 , size : [ 1 , 2 , 3 ] , arg : Osin ( 20 + 6 ) } ))  
-	stack.push(end()) 
-	stack.push(difference([]))
-	stack.push(start()) 
-		for ( let x = 0 ; x <= 20 ; x += 10 ) { 
-			stack.push(rotate ( { arg : [ x , 0 , 0 , ] } ))
-			stack.push(start()) 
-				stack.push(translate({ arg : [ 5 , 0 , 0 ] }))
-					stack.push(start())  
-						stack.push(cylinder({ size : 5 }))  
-					stack.push(end()) 
-				stack.push(end())
-			stack.push(translate ( { arg : [ 90 , 0 , 0 ] } ))
-			 stack.push(start()) 
-				stack.push(rotate ( { arg : [ 5 , 5 , 5 ] } ))
-				stack.push(start()) 
-					stack.push(sphere ( { r : 5 } ))  
-				stack.push(end()) 
-			stack.push(end()) 
-		} 
-	stack.push(end()) 
-
-	stack = lodash.flatten(stack)  
-
-	const m = buildTree(stack,0,stack.length-1,makeId(),'root') 
-
-	const poop = stack.map( (tkn,index) => { 	
-		let row = m.reduce( (result,tkn) => tkn.index===index ? tkn : result , false)  
-		return row !== false ? tkn+"('"+row.id+"','"+row.parent+"')" : tkn 
- 	}) 
-
-	console.log( streamToString(lodash.flatten(poop)) )*/
+	const start = () => ['{'] 
+	const end = () => ['}'] 
+	const union = (...args) => ['union','(',JSON.stringify(args[0]),')']
+	const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')'] 
+	const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')'] 
+	const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')'] 
+ 	const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')'] 
+	const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')'] 
+	const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')'] 
+	const Osin = (...args) => ['Osin','(',JSON.stringify(args[0]),')'] 
 
 
 
-	
-	//console.log( lodash.flatten(res) ) 
- 
-	//console.log( res.slice(28,54) ) 
-	
-	//console.log( splitArguments(res,28,52) )
- 
-	//console.log( res.slice(17,24) ) 
-	//console.log( splitArguments(res,17,24) )
-	
-
-	//console.log( streamToString(lodash.flatten(res)) ) 
-
-	/*let stack = [] 
-	let start = () => '{' 
-	let end = () => '}' 
-	let union = (...args) => 'union('+args+')' 
-	let difference = (...args) => 'difference('+args+')' 
-	let translate = (...args) => 'translate('+args+')' 
-	let rotate = (...args) => 'rotate('+args+')' 
- 	let cube = (...args) => 'cube('+JSON.stringify(args)+')' 
-	let sphere = (...args) => 'sphere('+JSON.stringify(args)+')' 
-	let cylinder = (...args) => 'cylinder('+JSON.stringify(args)+')' 
-
-	let test = () => { 
-		stack.push( cylinder ( {size :5 }) )  
-	}
-
-	stack.push(union()) 
-	stack.push(start()) 
-	stack.push(cube())  
-	stack.push(end()) 
-	stack.push(difference())  
-  stack.push(start())     
-		for ( let x = 0 ; x <= 20 ; x+=10  ) { 
-			stack.push( rotate ( [ x , 0 , 0 , ] )) 
-      stack.push( start() )   
-			stack.push( translate ( [ 5 , 0 , 0 ] ))  
-      stack.push( start() )   
-			test();   
-			stack.push( end() )  
-			stack.push( end() )  
-			stack.push( translate([ 90 , 0 , 0 ] ))  
-      stack.push( start() )  
-			stack.push( rotate ([ 5 , 5 , 5 ] ) )  
-      stack.push( start() )  
-			stack.push( sphere ( {r : 5} ) )  
-			stack.push( end() )  
-			stack.push( end() )   
-		} 
-	stack.push( end() )    
-	console.log( streamToString(stack) ) */
-
-	//let m = buildTree(res,0,res.length-1,makeId(),'root')  
-	//let poop = res.map( (tkn,index) => { 	
-
-	//let row = m.reduce( (result,tkn) => tkn.index===index ? tkn : result , false)  
-	//	return row !== false ? tkn+"("+row.id+","+row.parent+")" : tkn 
- 	//}) 
-
-
-	//console.log( streamToString(poop) ) 
-	
-	/*difference() {  
-		for ( x = [ 0 : 10 : 20 ] ) { 
-			translate([x,0,0]) { 
-				sphere(r=5);
-			}
-		}
-	}*/
-
-		
-	//let difference = (...args) => (...child) => " difference ( " + args + " " + child + " ) " 
-	//let translate  = (...args) => (...child) => " translate ( " + args + " , " + child + " ) "
-	//let sphere     = (...args) => (...child) => " sphere ( " + args + " " + child + " ) "  
-
-	//let r = [ 0 , difference() , 0 , translate([1,2,3]) , sphere(5) , 0 ,  translate([4,5,6]) , sphere(5) ] 
-	
-	//console.log( output ) 
-
-	//let stream = [ "{" , "{" , "{" , "}" , "}" , "}" ] 
-
-	
-
- //const compose = (...functions) => (...data) => functions.reduceRight((value, func) => func(value), data)
- 
- /*const end = (...args) => (obj) => "end"  
-
- const cube = (...args) => (obj) => "{ cube: '"+args[0]+"' , child: '" +obj+"'}"
-
- const sphere = (...args) => (obj) => "{ sphere: '"+args[0]+"' , child: '" +obj+"'}"
-
- const translate = (...args) => (obj) => "{ vector: '"+args[0]+"' , child: "+obj+"}"   
- 	 
- const difference = (...args) => (obj) => args[0].reduce( ( result , line ) => result + "--" + line )    
-
- const compose = (...func) => (...args) => func.reduce( ( value , f , i) =>  i === 1 ? f( args[i] )( value(args[0])() ) : f( args[i] )(value) )  
-  */
- //let res = compose ( difference )(  [
- //                                      compose( sphere , translate )( [5] , [1,2,3] ),
- //																			 compose( cube )( [7] ), 
- //																			 compose( cube )( [7] )	
- //                                   ] ) 
-
-
-
-/*“So there it is", said Pooh, when he had sung this to himself three times "It's come
-different from what I thought it would, but it's come. Now I must go and sing it to
-Piglet.”*/ 
-
+	//foo({}); 
+	//let output = stack.map( row => streamToString(row) ) 
+	//console.log( streamToString(output) ) 
 

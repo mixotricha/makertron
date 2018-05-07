@@ -471,4 +471,249 @@ Array.prototype.smap = function(callback) {
 
 //.reduce( (stack,tkn) => stack+" "+getToken(tkn) )  
 
+// =========================================================================================
+	// Heal lazy closure statements such as 'translate() sphere();' -> translate() { sphere(); } 
+	// =========================================================================================
+	const healClosure = stream => { 
+
+		// --------------------------------------------------------
+		// Consume stream picking out valid operations 
+		// --------------------------------------------------------
+		const consumeStream = ( sObj , tkn , index ) => {
+	 		const sTkn = tkn.getToken()
+			if ( sTkn === ";" || sTkn === "{" ) { 
+				if ( sTkn === ";" ) sObj.root = tkn   
+				sObj.result.push( sObj.stack.reverse() ) 
+				sObj.stack = [] 
+			}		
+			if ( isToken(sTkn,genOps) || isToken(sTkn,csgOps) || isToken(sTkn,modOps) ) { 
+				sObj.stack.push( [ tkn , sObj.root] ) 
+			}
+			return sObj 
+		}
+
+		// ---------------------------------------------------------------
+		// Update modified closure back in to new stream ( rawIdStream ) 
+		// --------------------------------------------------------------
+		const applyMap = ( stack , row , index ) => { 
+			row.forEach( (element,i) => { 
+				if ( i < row.length-1 ) {  
+					const sOff =  findPair("(",")", // closure we want to match 
+											0,0, // helper counting values 
+											parseInt(stack.rIs.findId(element[0].getId()))+1, // index position + 1
+											stack.rIs, // you must get the ({},x) type argument that comes after an operation 
+											tkn => tkn.getToken()) // pull through function 
+					stack.rIs.splice( sOff+1 , 0 , "new__||__{" ) // insert new closure start
+					stack.rIs.splice( parseInt(stack.rIs.findId(element[1].getId()))+1 , 0 , "new__||__}" )// insert new closure end	 
+				}
+			}) 		  
+			return stack 
+		}
+
+		// add lookup id to each token 
+		const rawIdStream = stream.map( tkn => makeId()+"__||__"+tkn ) 
+		// set everything that is not closure or operations to false
+		const idStream = rawIdStream.map( tkn => isToken(tkn.getToken(),genOps) || 
+																						 	isToken(tkn.getToken(),csgOps) ||
+																							 isToken(tkn.getToken(),modOps) ||			 
+																								isToken(tkn.getToken(),cloOps) ? tkn : false )
+		// filter out all false tokens and then reverse stream 
+		const table = idStream.filter( j => j !== false ? true : false  ).reverse()
+		// Consume tokens backwards from ; to produce new map of new closure 
+		const rMap = table.reduce( consumeStream , { stack : [] , result : [] , root : '' })
+								.result
+									.reduce( (stack,tkn) => tkn.length > 1 ? stack.concat([tkn]) : stack , [])    
+		// apply map of new closure to original stream producing new result. rIs is rawIdStream  
+		const result =  rMap.reduce( applyMap , {  rIs : rawIdStream } ) 
+										.rIs 
+											.reduce( (stack,tkn) => stack.concat( tkn.getToken() ) , [] ) 
+		return result  
+
+	}	// =========================================================================================
+	// Strip unique id from token 		
+	// =========================================================================================
+	String.prototype.getToken = function() { 
+		return ( this !== false && this !== true ) ? this.split("__||__")[1] : false 
+	}
+
+	// =========================================================================================
+	// Strip token from unique id 		
+	// =========================================================================================
+	String.prototype.getId = function() {
+		return this.split("__||__")[0]
+	}
+
+	// =========================================================================================
+	// find Id in id tagged stream 
+	// =========================================================================================
+	Array.prototype.findId = function( id ) { 
+			return this.reduce( (stack,tkn,index) => id === tkn.getId() ? stack.concat(index) : stack , [] ) 
+	}
+
+	// Now we have a result where we can seperate the CSG from the imperative things 
+	// by building the CSG in to a series of stack pushes and then evaluating the 
+	// whole baboosha 
+
+	let stack = [] 
+
+	const start = () => '{' 
+	const end = () => '}' 
+	const union = (...args) => ['union','(',args,')'] 
+	const difference = (...args) => ['difference','(',args,')'] 
+	const translate = (...args) => ['translate','(',JSON.stringify(args),')'] 
+	const rotate = (...args) => ['rotate','(',JSON.stringify(args),')'] 
+ 	const cube = (...args) => ['cube','(',args,')'] 
+	const sphere = (...args) => ['sphere','(',JSON.stringify(args),')'] 
+	const cylinder = (...args) => ['cylinder','(',JSON.stringify(args),')'] 
+	const Osin = (...args) => ['Osin','(',JSON.stringify(args),')'] 
+
+	//console.log( streamToString(lodash.flatten(res)) ) 
+
+	/*stack.push(union()) 
+	stack.push(start()) 
+		stack.push(cube ( { j : 3 , m : 12 , size : [ 1 , 2 , 3 ] , arg : Osin ( 20 + 6 ) } ))  
+	stack.push(end()) 
+	stack.push(difference([]))
+	stack.push(start()) 
+		for ( let x = 0 ; x <= 20 ; x += 10 ) { 
+			stack.push(rotate ( { arg : [ x , 0 , 0 , ] } ))
+			stack.push(start()) 
+				stack.push(translate({ arg : [ 5 , 0 , 0 ] }))
+					stack.push(start())  
+						stack.push(cylinder({ size : 5 }))  
+					stack.push(end()) 
+				stack.push(end())
+			stack.push(translate ( { arg : [ 90 , 0 , 0 ] } ))
+			 stack.push(start()) 
+				stack.push(rotate ( { arg : [ 5 , 5 , 5 ] } ))
+				stack.push(start()) 
+					stack.push(sphere ( { r : 5 } ))  
+				stack.push(end()) 
+			stack.push(end()) 
+		} 
+	stack.push(end()) 
+
+	stack = lodash.flatten(stack)  
+
+	const m = buildTree(stack,0,stack.length-1,makeId(),'root') 
+
+	const poop = stack.map( (tkn,index) => { 	
+		let row = m.reduce( (result,tkn) => tkn.index===index ? tkn : result , false)  
+		return row !== false ? tkn+"('"+row.id+"','"+row.parent+"')" : tkn 
+ 	}) 
+
+	console.log( streamToString(lodash.flatten(poop)) )*/
+
+
+
+	
+	//console.log( lodash.flatten(res) ) 
+ 
+	//console.log( res.slice(28,54) ) 
+	
+	//console.log( splitArguments(res,28,52) )
+ 
+	//console.log( res.slice(17,24) ) 
+	//console.log( splitArguments(res,17,24) )
+	
+
+	//console.log( streamToString(lodash.flatten(res)) ) 
+
+	/*let stack = [] 
+	let start = () => '{' 
+	let end = () => '}' 
+	let union = (...args) => 'union('+args+')' 
+	let difference = (...args) => 'difference('+args+')' 
+	let translate = (...args) => 'translate('+args+')' 
+	let rotate = (...args) => 'rotate('+args+')' 
+ 	let cube = (...args) => 'cube('+JSON.stringify(args)+')' 
+	let sphere = (...args) => 'sphere('+JSON.stringify(args)+')' 
+	let cylinder = (...args) => 'cylinder('+JSON.stringify(args)+')' 
+
+	let test = () => { 
+		stack.push( cylinder ( {size :5 }) )  
+	}
+
+	stack.push(union()) 
+	stack.push(start()) 
+	stack.push(cube())  
+	stack.push(end()) 
+	stack.push(difference())  
+  stack.push(start())     
+		for ( let x = 0 ; x <= 20 ; x+=10  ) { 
+			stack.push( rotate ( [ x , 0 , 0 , ] )) 
+      stack.push( start() )   
+			stack.push( translate ( [ 5 , 0 , 0 ] ))  
+      stack.push( start() )   
+			test();   
+			stack.push( end() )  
+			stack.push( end() )  
+			stack.push( translate([ 90 , 0 , 0 ] ))  
+      stack.push( start() )  
+			stack.push( rotate ([ 5 , 5 , 5 ] ) )  
+      stack.push( start() )  
+			stack.push( sphere ( {r : 5} ) )  
+			stack.push( end() )  
+			stack.push( end() )   
+		} 
+	stack.push( end() )    
+	console.log( streamToString(stack) ) */
+
+	//let m = buildTree(res,0,res.length-1,makeId(),'root')  
+	//let poop = res.map( (tkn,index) => { 	
+
+	//let row = m.reduce( (result,tkn) => tkn.index===index ? tkn : result , false)  
+	//	return row !== false ? tkn+"("+row.id+","+row.parent+")" : tkn 
+ 	//}) 
+
+
+	//console.log( streamToString(poop) ) 
+	
+	/*difference() {  
+		for ( x = [ 0 : 10 : 20 ] ) { 
+			translate([x,0,0]) { 
+				sphere(r=5);
+			}
+		}
+	}*/
+
+		
+	//let difference = (...args) => (...child) => " difference ( " + args + " " + child + " ) " 
+	//let translate  = (...args) => (...child) => " translate ( " + args + " , " + child + " ) "
+	//let sphere     = (...args) => (...child) => " sphere ( " + args + " " + child + " ) "  
+
+	//let r = [ 0 , difference() , 0 , translate([1,2,3]) , sphere(5) , 0 ,  translate([4,5,6]) , sphere(5) ] 
+	
+	//console.log( output ) 
+
+	//let stream = [ "{" , "{" , "{" , "}" , "}" , "}" ] 
+
+	
+
+ //const compose = (...functions) => (...data) => functions.reduceRight((value, func) => func(value), data)
+ 
+ /*const end = (...args) => (obj) => "end"  
+
+ const cube = (...args) => (obj) => "{ cube: '"+args[0]+"' , child: '" +obj+"'}"
+
+ const sphere = (...args) => (obj) => "{ sphere: '"+args[0]+"' , child: '" +obj+"'}"
+
+ const translate = (...args) => (obj) => "{ vector: '"+args[0]+"' , child: "+obj+"}"   
+ 	 
+ const difference = (...args) => (obj) => args[0].reduce( ( result , line ) => result + "--" + line )    
+
+ const compose = (...func) => (...args) => func.reduce( ( value , f , i) =>  i === 1 ? f( args[i] )( value(args[0])() ) : f( args[i] )(value) )  
+  */
+ //let res = compose ( difference )(  [
+ //                                      compose( sphere , translate )( [5] , [1,2,3] ),
+ //																			 compose( cube )( [7] ), 
+ //																			 compose( cube )( [7] )	
+ //                                   ] ) 
+
+
+
+/*“So there it is", said Pooh, when he had sung this to himself three times "It's come
+different from what I thought it would, but it's come. Now I must go and sing it to
+Piglet.”*/ 
+
 
