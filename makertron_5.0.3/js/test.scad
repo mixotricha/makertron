@@ -1,4 +1,4 @@
-module root() = { 
+module foo() { 
 
 debug = true;
 

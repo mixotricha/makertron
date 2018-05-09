@@ -70,6 +70,18 @@
 	}
 	
 	// =========================================================================================
+	// Is a token a number ?
+	// =========================================================================================
+	const isNumber = token => {
+		if ( token === undefined ) var token = this.tokens[this.stack]
+		token = token.replace(/([0-9])/g,'')
+		token = token.replace(/([.])/g,'')
+		token = token.replace(/([-])/g,'')
+		token = token.replace(/([+])/g,'')
+		return token.length === 0 ? true : false
+	}
+
+	// =========================================================================================
 	// Tokens : find matching closure 
 	// =========================================================================================
 	const findPair = (lft,rt,lftCount,rtCount,index,lst,pullThrough) => { 
@@ -124,7 +136,7 @@
 				//rowB.id = rowA.id 
 				rowB.parent = rowA.parent
 				rowB.head = [ 'const' , rowB.tkn , '=' ]  
-				rowB.tail - '' 	
+				rowB.tail = '=>' 	
 				rowA.tkn = ''					
 				rowA.id = ''
 				rowA.parent = ''
@@ -169,8 +181,18 @@
 			//If something else becomes argument. Otherwise becomes key : value pair
 			const table = parameters.reduce( ( stack , tkn , index ) => tkn === ',' ? stack.concat(index+1) : stack , [] ) 
 			table.forEach( (offset,index) => { 
-				isString(parameters[offset]) && parameters[offset+1] === "=" ? parameters[offset+1] = ":" 
-					: parameters.splice( offset , 0 ,  "arg" , ":" )				   		  
+
+				if ( isString(parameters[offset]) && parameters[offset+1] === "=" ) { 
+					 parameters[offset+1] = ":" 
+				}
+				else { 
+					if ( isString(parameters[offset]) || isNumber(parameters[offset]) ) { 
+						 parameters[offset] = "arg: " + parameters[offset]  
+					}
+					else { 
+						parameters.splice( offset , 0 ,  "arg" , ":" )	
+					}
+			  } 		  
 			})	
 			return ['{'].concat(parameters.map( tkn => tkn.replace("|||||",'')).slice(1,parameters.length).concat(['}'])) 
 		}
@@ -302,7 +324,8 @@
 				.reduce( (stack,row) => 
 						isToken(row.tkn,csgOps) || 
 							isToken(row.tkn,genOps) || 
-							isToken(row.tkn,modOps) ? stack.concat(row) : stack ,[])	 
+								isToken(row.tkn,modOps) 
+									? stack.concat(row) : stack ,[])	 
 	} 
 
 
@@ -310,9 +333,9 @@
 	// construct code 
 	// =======================================
 	const codeFromTree = (stream) => { 		
-		//console.log( stream.map( (row) => [{ id: row.id , parent: row.parent , children: row.children ,  token: row.tkn }] ) ) 
+		//stream.map( (row) => [{ id: row.id , parent: row.parent , children: row.children ,  token: row.tkn }] ) ) 
 		// All terminal nodes as indicated in build tree function by children = false  
-		const terminals = stream.reduce( (stack,row,index) => row.children === false ? stack.concat( index ) : stack , [] )  	
+		const terminals = stream.reduce( (stack,row,index) => row.children === false ? stack.concat( index ) : stack , [] ) 
 		// *** enumerate task works from terminals to specified roots to find the 'furthest' child  
 		const task = (data) => { 
 			const row = data.stream[data.index]  
@@ -332,31 +355,21 @@
 			terminals.forEach( term => {  	
 				let state = enumerate( { state : true , root: row.id , id: stream[term].id , index: term , stream: stream , result: [] } , task , eva )
 					.result 
-				 	if ( state === true && row.id !== stream[term].id ) { 
-					rStack.push( stream[term].id ) 
-				}
+				 	if ( state === true && row.id !== stream[term].id ) { rStack.push( stream[term].id ) }
 			})
 			if ( rStack.length !== 0 ) cStack.push( { root: row.id , term : rStack[rStack.length-1]} )
 		}) 
 		// iterate through stream to find each root and each 'furthest' child. This is where we put our closure  
 		cStack.forEach( pair => { 
-			let csg = false
-			let st = '{' 
-			let en = '}' 
+			let csg = false , st = '{' , en = '}' 
 			stream.forEach( row => {
-					
-				if ( pair.root === row.id ) { 
-					if ( isToken(row.tkn,csgOps) ) { csg = true }
-				}
-
+				if ( pair.root === row.id ) { if ( isToken(row.tkn,csgOps) ) { csg = true } }
 				if ( csg === true ) { 
-					st = "stack.push(start())" 
-					en = "stack.push(end())" 
+					st = "\nstack.push(start())\n" 
+					en = "\nstack.push(end())\n" 
 				}
-
 				if ( pair.root === row.id ) { row.tail = row.tail.concat(st) } 
 				if ( pair.term === row.id ) { row.closure = row.closure.concat(en) }
-
 			})	
 		})
 		// generate concat of head tkn argument and tail for each row 
@@ -366,17 +379,26 @@
 				row.result = row.result.concat(row.head) 
 			}
 			else { row.result = row.result.concat(row.tkn) } 
-			row.result = row.result.concat('(',row.args,')') 
+			// Some operations like 'else' to be excluded from having () 
+			if ( !isToken( row.tkn , excOps )  ) { row.result = row.result.concat('(',row.args,')') }
 			if ( row.tail.length !== 0 ) { row.result = row.result.concat( row.tail ) }
-			if ( row.closure.length !== 0 ) { row.result = row.result.concat( row.closure.reverse() ) }  
-		}) 
-		return stream.reduce( (output,row) => output += streamToString(row.result) , "" )    
+			if ( row.closure.length !== 0 ) { row.result = row.result.concat( row.closure.reverse() ) } // Still not clear about the reverse here ! Why ?  
+		})  
+		return stream  
+	} 
+
+	const PolishOutput = stream => { 
+		let res = stream.reduce( (output,row) => {
+			output += "\n" + streamToString(row.result) + "\n" 
+			return output 				 
+		}, "" )   
+		return res 
 	} 
 
 	// scad example 
-	const scad = 'module foo () { union ( ) { cube (size=0.6); } difference() { if ( 1 === 1 ) for (x=[0:10:20]) rotate ([x,0,0]) { translate([5,0,0]) { if ( 2 === 2 ) { cylinder (size=5); } else { sphere(r=7); } } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } } cube(size=0.4); }'
+	//const scad = 'module foo () { module blah() { union ( ) { cube (size=0.6); } } difference() { if ( 1 === 1 ) for (x=[0:10:20]) rotate ([x,0,0]) { translate([5,0,0]) { if ( 2 === 2 ) { cylinder (size=5); } else { sphere(r=7); } } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } } cube(size=0.4); blah(); }'
 
-	//let scad = fs.readFileSync('test.scad', 'utf8');
+	let scad = fs.readFileSync('test.scad', 'utf8');
 
 	const src = preProcess( scad ) 
 
@@ -388,7 +410,7 @@
 										"circle", "sphere","translate",
 										"scale","rotate","cube",
 										"cylinder","linear_extrude","polygon",
-										"polyhedron","echo","colour","color","root"]
+										"polyhedron","echo","colour","color",]
 
 	// closure operations 
 	const cloOps = [ ";" , "{" , "}" ] 
@@ -396,8 +418,8 @@
 	// Module operations  
 	const modOps = buildModuleList( src )
 
-	// Operations that shall be excluded 	
-	const excOps = [ "for","if" , "else" ] 
+	// Operations that shall be excluded from having arguments 	
+	const excOps = [ "else" ] 
 
 	// 1. Generate parent/child tree
 	// 2. Reformat function call arguments to json  
@@ -406,30 +428,304 @@
 	// 5. convert all CSG operations to stack pushes 
 	
 	const newTree = reformatCsgOps( reformatLoops( reformatModules( reformatCalls( buildFullTree(src) ) ) ) )    
-
+   
 	// Build new code from tree
-	const result = codeFromTree ( newTree ) 
+	const result = PolishOutput( codeFromTree ( newTree ) )  
 	
-	console.log( result ) 
+	//console.log( result ) 
 	
 	// Following is an example of a stack generated by the code above 
 
 	let stack = [] 
 
-	const start = () => ['{'] 
-	const end = () => ['}'] 
+	const start = () => ['('] 
+	const end = () => [')'] 
 	const union = (...args) => ['union','(',JSON.stringify(args[0]),')']
 	const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')'] 
+	const intersection = (...args) => ['intersection','(',JSON.stringify(args[0]),')'] 
 	const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')'] 
 	const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')'] 
+	const scale = (...args) => ['scale','(',JSON.stringify(args[0]),')'] 
+
  	const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')'] 
 	const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')'] 
 	const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')'] 
+	const color = (...args) => ['color','(',JSON.stringify(args[0]),')'] 
 	const Osin = (...args) => ['Osin','(',JSON.stringify(args[0]),')'] 
+	const echo = (...args) => ['echo','(',JSON.stringify(args[0]),')'] 
+	const version = (...args) => ['version','(',JSON.stringify(args[0]),')'] 
 
+		const foo = ( { } ) =>{ 
+			const debug = true 
+			stack.push( difference ( { } ) ) 
+			stack.push(start())
+				stack.push( intersection ( { } ) ) 
+				stack.push(start())
+					body ( { } ) 
+					intersector ( { } ) 
+				stack.push(end())
+				holes ( { } ) 
+			stack.push(end())
+		 
+			if ( ( debug ) ) { helpers ( { } ) } 
 
+		} 
 
-	//foo({}); 
-	//let output = stack.map( row => streamToString(row) ) 
-	//console.log( streamToString(output) ) 
+		const body = ( { } ) =>{ 
+
+		stack.push( color ( { arg : "Blue" } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( sphere ( { arg: 10 } ) ) 
+		stack.push(end())
+		 } 
+
+		const intersector = ( { } ) =>{ 
+
+		stack.push( color ( { arg : "Red" } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( cube ( { arg: 15 , center : true } ) ) 
+		stack.push(end())
+		 } 
+
+		const holeObject = ( { } ) =>{ 
+
+		stack.push( color ( { arg : "Lime" } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( cylinder ( { h : 20 , r : 5 , center : true } ) ) 
+		stack.push(end())
+		 } 
+
+		const intersected = ( { } ) =>{ 
+
+		stack.push( intersection ( { } ) ) 
+		stack.push(start())
+		 
+
+		body ( { } ) 
+
+		intersector ( { } ) 
+		stack.push(end())
+		 } 
+
+		const holeA = ( { } ) =>{ 
+
+		stack.push( rotate ( { arg : [ 0 , 90 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		holeObject ( { } ) 
+		stack.push(end())
+		 } 
+
+		const holeB = ( { } ) =>{ 
+
+		stack.push( rotate ( { arg : [ 90 , 0 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		holeObject ( { } ) 
+		stack.push(end())
+		 } 
+
+		const holeC = ( { } ) =>{ 
+
+		holeObject ( { } ) } 
+
+		const holes = ( { } ) =>{ 
+
+		stack.push( union ( { } ) ) 
+		stack.push(start())
+		 
+
+		holeA ( { } ) 
+
+		holeB ( { } ) 
+
+		holeC ( { } ) 
+		stack.push(end())
+		 } 
+
+		const helpers = ( { } ) =>{ 
+
+		const line = ( { } ) =>{ 
+
+		stack.push( color ( { arg : "Black" } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( cylinder ( { r : 1 , h : 10 , center : true } ) ) 
+		stack.push(end())
+		 } 
+
+		stack.push( scale ( { arg: 0.5 } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( translate ( { arg : [ - 30 , 0 , - 40 ] } ) ) 
+		stack.push(start())
+		 
+
+		intersected ( { } ) 
+
+		stack.push( translate ( { arg : [ - 15 , 0 , - 35 ] } ) ) 
+		stack.push(start())
+		 
+
+		body ( { } ) 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 15 , 0 , - 35 ] } ) ) 
+		stack.push(start())
+		 
+
+		intersector ( { } ) 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ - 7.5 , 0 , - 17.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , 30 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 7.5 , 0 , - 17.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , - 30 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 30 , 0 , - 40 ] } ) ) 
+		stack.push(start())
+		 
+
+		holes ( { } ) 
+
+		stack.push( translate ( { arg : [ - 10 , 0 , - 35 ] } ) ) 
+		stack.push(start())
+		 
+
+		holeA ( { } ) 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 10 , 0 , - 35 ] } ) ) 
+		stack.push(start())
+		 
+
+		holeB ( { } ) 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 30 , 0 , - 35 ] } ) ) 
+		stack.push(start())
+		 
+
+		holeC ( { } ) 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 5 , 0 , - 17.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , - 20 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ - 5 , 0 , - 17.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , 30 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 15 , 0 , - 17.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , - 45 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ - 20 , 0 , - 22.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , 45 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+
+		stack.push( translate ( { arg : [ 20 , 0 , - 22.5 ] } ) ) 
+		stack.push(start())
+		 
+
+		stack.push( rotate ( { arg : [ 0 , - 45 , 0 ] } ) ) 
+		stack.push(start())
+		 
+
+		line ( { } ) 
+		stack.push(end())
+		 
+		stack.push(end())
+		 
+		stack.push(end())
+		 } 
+
+	  
+
+	foo({}); 
+	let output = stack.map( row => streamToString(row) ) 
+	console.log( streamToString(output) ) 
 
