@@ -30,17 +30,26 @@
 	// =========================================================================================
 	// Lex the input string against regexp set
 	// =========================================================================================
-	const preProcess = buffer => { 
-		const expressions = [ /([\t])/g , /(\{)/ , /(\})/ , /(\()/ , 
+	const preProcess = buffer => {
+ 
+		const expressions = [ /(\{)/ , /(\})/ , /(\()/ , 
 												/(\))/ , /(\[)/ , /(\])/ , 
 												/(\;)/ , /(\:)/ , /(\=)/ , 
 												/(\+)/ , /(\-)/ , /(\*)/ , 
 												/(\<)/ , /(\/)/ , /(\,)/ , 
-												/(module)/, /\n/] 
+												/(\#\$\%\^)/, 
+												/(module)/, /(function)/, /\n/] 
+		
+		buffer = buffer.replace(/(==)/g,'\#\$\%\^')
+		buffer = buffer.replace(/(!=)/g,'\@\^\!\^')
+		buffer = buffer.replace(/([\t])/g,'') 
 		buffer = buffer.split(/ /)
 		expressions.forEach( (regExp) => {
-			buffer = lodash.flatten(buffer.map( tkn => tkn.split(regExp)))  	
-		}) 
+			buffer = lodash.flatten(buffer.map(tkn => tkn.split(regExp)))  	
+		})
+
+		buffer = buffer.map( tkn => tkn.replace(/(\#\$\%\^)/g,'===').replace(/(\@\^\!\^)/g,'!==') )  
+		
 		return buffer.filter( tkn => tkn !== '' ? true : false )   
 	}
 
@@ -66,6 +75,9 @@
 		token = token.replace(/([A-Z-a-z])/g,'')
 		token = token.replace(/([0-9])/g,'')
 		token = token.replace(/(['_'])/g,'')
+		token = token.replace(/(['$'])/g,'') // because some variables start with $ 
+		token = token.replace(/(['_'])/g,'')  
+			
 		return token.length === 0 ? true : false
 	}
 	
@@ -121,7 +133,31 @@
 	// ======================================================
 	// convert function declarations to js functions 
 	// ======================================================
+
+	//function polar_to_cartesian (polar) = [
+	//	polar[1]*cos(polar[0]),
+	//	polar[1]*sin(polar[0])
+	//];
+
+	//function polar_to_cartesian(polar) { return (data) => [ polar[1]*cos(polar[0]), polar[1]*sin(polar[0]) ]; } 
+
 	const reformatFunctions = stream => { 
+		// *** enumerate task func
+		const task = (data) => { 
+			let row = data.stream[data.index]
+			if ( row.tkn === "function" ) {
+				row.head = lodash.flatten([ 'function' , row.head[0] , row.head[1] , '{' , 'return' ]) // flatten why ? 
+				row.tail = ['}']   				
+				data.stream[data.index] = row
+			}
+			data.index++ 
+			return data 
+		} 
+		// *** enumerate end condition 
+		const eva = (data) => { return data.index < data.len ? true : false }
+		return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva )
+			.stream.reduce( (stack,row) => row.tkn !== '' ? stack.concat(row) : stack ,[])  
+
 	}
 
 	// =======================================================
@@ -133,10 +169,12 @@
 			let rowA = data.stream[data.index]
 			let rowB = data.stream[data.index+1] 
 			if ( rowA.tkn === "module" ) {
-				//rowB.id = rowA.id 
+				rowB.def = true 
 				rowB.parent = rowA.parent
-				rowB.head = [ 'const' , rowB.tkn , '=' ]  
-				rowB.tail = '=>' 	
+				rowB.head = [ 'function' , rowB.tkn  ]
+				rowB.args = ['(','{'].concat( rowB.args.slice(1,rowB.args.length-1).concat('}',')') )  
+				rowB.tail = '' 	
+				rowB.func = true 
 				rowA.tkn = ''					
 				rowA.id = ''
 				rowA.parent = ''
@@ -152,6 +190,7 @@
 			.stream.reduce( (stack,row) => row.tkn !== '' ? stack.concat(row) : stack ,[])  
 	} 
 
+	
 	// ==================================================
 	// Reformat calls to functions to be of a jsn format 
 	// ==================================================
@@ -181,27 +220,25 @@
 			//If something else becomes argument. Otherwise becomes key : value pair
 			const table = parameters.reduce( ( stack , tkn , index ) => tkn === ',' ? stack.concat(index+1) : stack , [] ) 
 			table.forEach( (offset,index) => { 
-
 				if ( isString(parameters[offset]) && parameters[offset+1] === "=" ) { 
 					 parameters[offset+1] = ":" 
 				}
 				else { 
-					if ( isString(parameters[offset]) || isNumber(parameters[offset]) ) { 
-						 parameters[offset] = "arg: " + parameters[offset]  
-					}
-					else { 
-						parameters.splice( offset , 0 ,  "arg" , ":" )	
-					}
+				 isString(parameters[offset]) || isNumber(parameters[offset]) ?  parameters[offset] = "arg: " + parameters[offset]  
+					 : parameters.splice( offset , 0 ,  "arg" , ":" )	
 			  } 		  
 			})	
-			return ['{'].concat(parameters.map( tkn => tkn.replace("|||||",'')).slice(1,parameters.length).concat(['}'])) 
+			return ['(','{'].concat(parameters.map( tkn => tkn.replace("|||||",'')).slice(1,parameters.length).concat(['}',')']))
 		}
 		// *** enumerating task for reformatCalls
 		const task = (data) => { 
 			let args = data.stream[data.index].args 
 			const tkn = data.stream[data.index].tkn 
-			if ( args !== '' && !isToken(tkn,genOps) ) { 
-				data.stream[data.index].args = argumentsToJson( data.stream[data.index].args )
+			if ( args !== '' && 
+					 data.stream[data.index].def === false && 
+					 tkn !== "if" 
+					 && tkn !== "for" ) { // come back clean this up 
+						data.stream[data.index].args = argumentsToJson( data.stream[data.index].args )
 			}
 			data.index++
 			return data
@@ -219,6 +256,7 @@
 		const task = (data) => { 
 			const rowA = data.stream[data.index] 
 			if ( rowA.tkn === "for" ) { 
+				console.log( "Snacks!" , rowA.args ) 
 				const args = rowA.args			
  				const variable = args[1] 
 				const fields = args.slice( 4 , args.length )
@@ -244,6 +282,26 @@
 		return enumerate( { index: 0 , stream : stream , len : stream.length , state: true  },task,eva).stream 
 	}
 
+	// =======================================================
+	// convert assignments to 'let'  
+	// =======================================================
+	const reformatVariables = stream => { 
+		// *** enumerate task func
+		const task = (data) => { 
+			let rowA = data.stream[data.index]
+			if ( rowA.assignment.length !== 0  ) {			
+				rowA.head = [ 'if (',  rowA.tkn , '===undefined) { var ' , rowA.tkn , ' }' , rowA.tkn ]   	
+				data.stream[data.index] = rowA
+			}
+			data.index++ 
+			return data 
+		} 
+		// *** enumerate end condition 
+		const eva = (data) => { return data.index < data.len ? true : false }
+		enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
+		return stream 
+	}
+
  	// =======================================================
 	// convert module declarations to js functions 
 	// =======================================================
@@ -252,8 +310,8 @@
 		const task = (data) => { 
 			let rowA = data.stream[data.index]
 			if ( isToken(rowA.tkn,csgOps) ) {			
-				rowA.head = [ 'stack.push(' , rowA.tkn ]  
-				rowA.tail = [')'] 	
+				rowA.head = [ 'stack.push(' , rowA.tkn ]
+				rowA.args.length !== 2 ? rowA.args = rowA.args.slice(1,rowA.args.length)  : rowA.args = [ '{' , " " , '}' , ')' ] 
 				data.stream[data.index] = rowA
 			}
 			data.index++ 
@@ -264,15 +322,28 @@
 		return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
 	} 
 
+
+//function polar_to_cartesian (polar) = [
+
 	// =============================================================================
 	// Bulds Par/Child linked list of operations
 	// =============================================================================
 	const buildFullTree = (stream) => {
-		// *** Fold arguments in to each operation row 
-		const foldInArgs = (data) => {
-				const tkn = data.stream[data.index]  
-				let args = ''
-				let end = -1  
+
+		// Any operations we want to call at the JS level but that are 
+		// not directly native like sin/cos/sqrt.  
+		stream = stream.map( tkn => isToken(tkn,trigOps) ? "O"+tkn : tkn ) 
+		
+		// *** Generate a row entry for a token. Break out arguments if it has any.   
+		const considerRow = (data) => {
+				let tkn = data.stream[data.index]  
+				let args = '' // function arguments 
+				let assign = '' // assignments for variables
+				let fbody = '' // function bodies ( not modules ) 
+				let head = ''  // head of rewritten row 
+				let tail = ''  // tail of rewritten row 
+				let end = -1
+				// if we are csgOp or genOp or cloOp or modOp pick up parameters
 				if ( isToken(tkn,csgOps) || 
 						 isToken(tkn,genOps) || 
 						 isToken(tkn,cloOps) ||
@@ -280,10 +351,44 @@
 						 if ( data.stream[data.index+1] === "(" ) { 
 						 		end = findPair('(',')',0,0,data.index+1,data.stream,tkn=>tkn) 
 								args = data.stream.slice( data.index+1 , end+1 ) 
-								data.index = end 
+								data.index = end  									 
 						 }
 				} 
-				data.result = data.result.concat( {  'id': makeId() , children: false , 'parent': '' , head: '', 'tkn': tkn , tail: '' , closure:[], args: args } )
+				else {  // we are some other form of expression assignment or function
+					//Functions follow = ; pattern here. Parameters go in to the fbody  					
+					if ( tkn === "function" ) { 
+						if ( isString(data.stream[data.index+1]) ) { 
+							if ( data.stream[data.index+2] === "(" ) { 
+								end = findPair('(',')',0,0,data.index+2,data.stream,tkn=>tkn) 								
+								head = [ data.stream[data.index+1] , data.stream.slice( data.index+2 , end+1 ) ]    
+								data.index = end  	
+								end = findPair('=',';',0,0,data.index+1,data.stream,tkn=>tkn)  
+								fbody = data.stream.slice( data.index+2 , end+1 )
+								data.index = end 																 
+							}	
+						}
+					}
+  				else { 
+						// variable assignments go in to the assignment 
+						if ( isString(tkn) && data.stream[data.index+1] === "=" ) {  
+							end = findPair('=',';',0,0,data.index+1,data.stream,tkn=>tkn) 
+							tkn = tkn.replace("$",'DOLLAR_SIGN_') // dollar signs bad 
+							assign = data.stream.slice( data.index+1 , end+1 )
+							data.index = end 
+						}
+					}
+				}
+				data.result = data.result.concat( {  'id'         : makeId() , 
+																						 'children'   : false    , 
+																						 'assignment' : assign   ,
+																						 'fbody'      : fbody    , 
+																						 'def'        : false    ,
+                                             'parent'     : ''       , 
+                                             'head'       : head     , 
+                                             'tkn'        : tkn      , 
+                                             'tail'       : tail     , 
+                                             'closure'    : []       , 
+                                             'args'       : args  } )
 				data.index++ 
 				return data 
 		}
@@ -293,16 +398,17 @@
 			const tknA = rowA.tkn
 			const rowB = data.table[data.index+1] // now needs to pick up offset somehow 
 			const tknB = rowB.tkn 
+			// parent child relationship  
 			if ( isToken(tknA,csgOps) || isToken(tknA,genOps) || isToken(tknA,modOps) ) { 	//is operation
-				if ( tknB === "{" ) { 	
-					data.table = setChildren(data.table,rowA.id,'{','}',data.index) // has closure 
+				if ( tknB === "{" ) { // has closure	
+					data.table = setChildren(data.table,rowA.id,'{','}',data.index)  
 					data.table[data.index].children = true 		
 				}					
-				if( isToken(tknB,csgOps) || isToken(tknB,genOps) || isToken(tknB,modOps) ) { // is another operation 
+				if( isToken(tknB,csgOps) || isToken(tknB,genOps) || isToken(tknB,modOps) ) { // is another operation following on 
 					data.table[data.index+1].parent = rowA.id
 					data.table[data.index].children = true  
 				}
-			}
+			}			
 			data.index++ 
 			return data 
 		}
@@ -318,19 +424,22 @@
 		}
 		// *** enumerate end condition 
 		const eva = (data) => { return data.index < data.len ? true : false }
-		const table = enumerate( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , foldInArgs , eva ).result 
+		// process rows in stream in to sub groups  	
+		const table = enumerate( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , considerRow , eva ).result 
+		// build parent / child relationship and eliminate unwanted tokens 
 		return enumerate( { state : true , index: 0 , table: table , len: table.length-1 } , buildRelations , eva )
 			.table
 				.reduce( (stack,row) => 
 						isToken(row.tkn,csgOps) || 
 							isToken(row.tkn,genOps) || 
-								isToken(row.tkn,modOps) 
+								isToken(row.tkn,modOps) ||
+									row.assignment.length !== 0 ||
+									row.fbody.length !== 0   
 									? stack.concat(row) : stack ,[])	 
 	} 
 
-
 	// =======================================
-	// construct code 
+	// construct code back out from tree 
 	// =======================================
 	const codeFromTree = (stream) => { 		
 		//stream.map( (row) => [{ id: row.id , parent: row.parent , children: row.children ,  token: row.tkn }] ) ) 
@@ -375,18 +484,34 @@
 		// generate concat of head tkn argument and tail for each row 
 		stream.forEach( (row) => { 
 			row.result = []
-			if ( row.head.length !== 0 ) {
-				row.result = row.result.concat(row.head) 
-			}
-			else { row.result = row.result.concat(row.tkn) } 
-			// Some operations like 'else' to be excluded from having () 
-			if ( !isToken( row.tkn , excOps )  ) { row.result = row.result.concat('(',row.args,')') }
+			// if we have a head otherwise begin with the tkn 
+			row.head.length !== 0 ? row.result = row.result.concat(row.head) : row.result = row.result.concat(row.tkn)  
+			// Some operations like 'else' and assignments to be excluded from having () 
+
+			if ( row.args.length === 2 ) row.args = ['(','{','}',')']
+
+			// not an assignment not excluded op not a module 
+			if ( !isToken( row.tkn , excOps ) && 
+					 row.assignment.length === 0 && 
+					 !isToken(row.tkn,modOps) 
+				) { row.result = row.result.concat('(',row.args,')') }
+			// if it is arguments to module 
+			if ( isToken(row.tkn,modOps) ) { row.result = row.result.concat(row.args) } 
+			// if we have an assignment 	
+			if ( row.assignment.length !== 0 ) { row.result = row.result.concat(row.assignment) }
+			// if we have a function body 
+			if ( row.fbody.length !== 0 ) { row.result = row.result.concat(row.fbody) }
+			// if we have a tail 
 			if ( row.tail.length !== 0 ) { row.result = row.result.concat( row.tail ) }
+			// if we have some final closure 
 			if ( row.closure.length !== 0 ) { row.result = row.result.concat( row.closure.reverse() ) } // Still not clear about the reverse here ! Why ?  
 		})  
 		return stream  
 	} 
 
+	// ========================================================
+	// Basic reformatting of generated code before revaluation 
+	// ========================================================
 	const PolishOutput = stream => { 
 		let res = stream.reduce( (output,row) => {
 			output += "\n" + streamToString(row.result) + "\n" 
@@ -419,313 +544,42 @@
 	const modOps = buildModuleList( src )
 
 	// Operations that shall be excluded from having arguments 	
-	const excOps = [ "else" ] 
+	const excOps = [ "else" , "function" ] 
+
+	const trigOps = [ "cos" , "sin" , "atan2" , "pow" , "sqrt" , "max" , "min" ] 
+
+	let header = "let stack = []; const start = () => ['{']; const end = () => ['}']; const union = (...args) => ['union','(',JSON.stringify(args[0]),')'];const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')']; const intersection = (...args) => ['intersection','(',JSON.stringify(args[0]),')']; const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')']; const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')']; const scale = (...args) => ['scale','(',JSON.stringify(args[0]),')']; const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')']; const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')']; const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')']; const color = (...args) => ['color','(',JSON.stringify(args[0]),')']; const polygon = (...args) => ['polygon','(',JSON.stringify(args[0]),')']; const circle = (...args) => ['circle','(',JSON.stringify(args[0]),')']; const echo = (...args) => ['echo','(',JSON.stringify(args[0]),')']; const version = (...args) => ['version','(',JSON.stringify(args[0]),')'];"
+
+
+let trig = ' const truncate = (num, places) => num; const deg2rad  = (deg) => deg * (Math.PI/180);  const rad2deg  = (rad) => (rad * 180)/Math.PI; const Ocos     = (rad) => truncate(Math.cos(deg2rad(rad)),4); const Osin     = (rad) => truncate(Math.sin(deg2rad(rad)),4); const Oatan2   = (a,b) => truncate(Math.atan2(a,b),4); const Opow     = (a,b) => truncate(Math.pow(a,b),4);   const Osqrt    = (a)   => truncate(Math.sqrt(a),4);    const Omax     = (a,b) => truncate(Math.max(a,b),4);   const Omin     = (a,b) => truncate(Math.min(a,b),4);'  	
+
+	let footer = "foo({}); return stack"
+
+	//console.log(src) 
 
 	// 1. Generate parent/child tree
-	// 2. Reformat function call arguments to json  
-	// 3. Reformat module format to js functions 
-	// 4. Reformat loops to js loops 
-	// 5. convert all CSG operations to stack pushes 
+	// 2. Reformat variable assignments
+	// 3. Reformat function call arguments to json  
+	// 4. Reformat module format to js functions 
+	// 5. Reformat loops to js loops 
+	// 6. convert all CSG operations to stack pushes 
 	
-	const newTree = reformatCsgOps( reformatLoops( reformatModules( reformatCalls( buildFullTree(src) ) ) ) )    
-   
+	const newTree = reformatCsgOps( reformatLoops( reformatCalls( reformatModules( reformatVariables( reformatFunctions( buildFullTree(src) ) ) ) ) ) )    
+
+	//const newTree =  reformatModules( reformatCalls( reformatVariables( reformatFunctions( buildFullTree(src) ) ) ) )     
+
+	//console.log( newTree ) 
+
 	// Build new code from tree
-	const result = PolishOutput( codeFromTree ( newTree ) )  
+	const result = header + trig + PolishOutput( codeFromTree ( newTree ) ) + footer    
 	
 	//console.log( result ) 
 	
-	// Following is an example of a stack generated by the code above 
-
-	let stack = [] 
-
-	const start = () => ['('] 
-	const end = () => [')'] 
-	const union = (...args) => ['union','(',JSON.stringify(args[0]),')']
-	const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')'] 
-	const intersection = (...args) => ['intersection','(',JSON.stringify(args[0]),')'] 
-	const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')'] 
-	const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')'] 
-	const scale = (...args) => ['scale','(',JSON.stringify(args[0]),')'] 
-
- 	const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')'] 
-	const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')'] 
-	const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')'] 
-	const color = (...args) => ['color','(',JSON.stringify(args[0]),')'] 
-	const Osin = (...args) => ['Osin','(',JSON.stringify(args[0]),')'] 
-	const echo = (...args) => ['echo','(',JSON.stringify(args[0]),')'] 
-	const version = (...args) => ['version','(',JSON.stringify(args[0]),')'] 
-
-		const foo = ( { } ) =>{ 
-			const debug = true 
-			stack.push( difference ( { } ) ) 
-			stack.push(start())
-				stack.push( intersection ( { } ) ) 
-				stack.push(start())
-					body ( { } ) 
-					intersector ( { } ) 
-				stack.push(end())
-				holes ( { } ) 
-			stack.push(end())
-		 
-			if ( ( debug ) ) { helpers ( { } ) } 
-
-		} 
-
-		const body = ( { } ) =>{ 
-
-		stack.push( color ( { arg : "Blue" } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( sphere ( { arg: 10 } ) ) 
-		stack.push(end())
-		 } 
-
-		const intersector = ( { } ) =>{ 
-
-		stack.push( color ( { arg : "Red" } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( cube ( { arg: 15 , center : true } ) ) 
-		stack.push(end())
-		 } 
-
-		const holeObject = ( { } ) =>{ 
-
-		stack.push( color ( { arg : "Lime" } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( cylinder ( { h : 20 , r : 5 , center : true } ) ) 
-		stack.push(end())
-		 } 
-
-		const intersected = ( { } ) =>{ 
-
-		stack.push( intersection ( { } ) ) 
-		stack.push(start())
-		 
-
-		body ( { } ) 
-
-		intersector ( { } ) 
-		stack.push(end())
-		 } 
-
-		const holeA = ( { } ) =>{ 
-
-		stack.push( rotate ( { arg : [ 0 , 90 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		holeObject ( { } ) 
-		stack.push(end())
-		 } 
-
-		const holeB = ( { } ) =>{ 
-
-		stack.push( rotate ( { arg : [ 90 , 0 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		holeObject ( { } ) 
-		stack.push(end())
-		 } 
-
-		const holeC = ( { } ) =>{ 
-
-		holeObject ( { } ) } 
-
-		const holes = ( { } ) =>{ 
-
-		stack.push( union ( { } ) ) 
-		stack.push(start())
-		 
-
-		holeA ( { } ) 
-
-		holeB ( { } ) 
-
-		holeC ( { } ) 
-		stack.push(end())
-		 } 
-
-		const helpers = ( { } ) =>{ 
-
-		const line = ( { } ) =>{ 
-
-		stack.push( color ( { arg : "Black" } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( cylinder ( { r : 1 , h : 10 , center : true } ) ) 
-		stack.push(end())
-		 } 
-
-		stack.push( scale ( { arg: 0.5 } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( translate ( { arg : [ - 30 , 0 , - 40 ] } ) ) 
-		stack.push(start())
-		 
-
-		intersected ( { } ) 
-
-		stack.push( translate ( { arg : [ - 15 , 0 , - 35 ] } ) ) 
-		stack.push(start())
-		 
-
-		body ( { } ) 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 15 , 0 , - 35 ] } ) ) 
-		stack.push(start())
-		 
-
-		intersector ( { } ) 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ - 7.5 , 0 , - 17.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , 30 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 7.5 , 0 , - 17.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , - 30 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 30 , 0 , - 40 ] } ) ) 
-		stack.push(start())
-		 
-
-		holes ( { } ) 
-
-		stack.push( translate ( { arg : [ - 10 , 0 , - 35 ] } ) ) 
-		stack.push(start())
-		 
-
-		holeA ( { } ) 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 10 , 0 , - 35 ] } ) ) 
-		stack.push(start())
-		 
-
-		holeB ( { } ) 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 30 , 0 , - 35 ] } ) ) 
-		stack.push(start())
-		 
-
-		holeC ( { } ) 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 5 , 0 , - 17.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , - 20 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ - 5 , 0 , - 17.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , 30 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 15 , 0 , - 17.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , - 45 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ - 20 , 0 , - 22.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , 45 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-
-		stack.push( translate ( { arg : [ 20 , 0 , - 22.5 ] } ) ) 
-		stack.push(start())
-		 
-
-		stack.push( rotate ( { arg : [ 0 , - 45 , 0 ] } ) ) 
-		stack.push(start())
-		 
-
-		line ( { } ) 
-		stack.push(end())
-		 
-		stack.push(end())
-		 
-		stack.push(end())
-		 } 
-
-	  
-
-	foo({}); 
+	let stack = new Function(result)();
+	//console.log( stack ) 
 	let output = stack.map( row => streamToString(row) ) 
 	console.log( streamToString(output) ) 
+
+
+
 
