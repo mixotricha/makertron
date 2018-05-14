@@ -1,4 +1,4 @@
-
+ 
 	/***************************************************************************
 	 *   Copyright (c) Damien Towning         (connolly.damien@gmail.com) 2017 *
 	 *                                                                         *
@@ -21,142 +21,75 @@
 	 *                                                                         *
 	 ***************************************************************************/
 
+	// suggested references  
+	//The Electric Lady - Janelle Monae / A Seat at the Table- Solange / New Amerykah Part One- Erykah Badu
+	//Songversation- India Arie / BEcoming- Stacy Barthe
+
 	"use strict";   
 	/*global require,console,__dirname,Buffer*/
 	/*jshint -W069 */ 
-	var lodash = require('lodash') 
+	const lodash = require('lodash') 
 	
 	module.exports = function Parser(callback) {
- 
-		// These are functions that will have .this appended 
-		// these arguments will parsed to json format unless they are excluded 
-		this.modules  = ["circle", "sphere","translate","scale","rotate","cube","cylinder","linear_extrude","polygon","polyhedron","echo"] 
 
-		// These are tokens that are not to be classed as variables for each module scope 
-		this.standard = [ "for" ,  "false" , "true", "if" , "max" , "min" , "sin" , "cos" , "union" , "difference" , "intersection", 
-		                  "minkowski","rotate" , "translate" , "scale" , "+" , "-" , "++" , "--" , "*" , "function" , "sqrt" , ";" ]
+		// =========================================================================================
+		// Lex the input string against regexp set
+		// =========================================================================================
+		const preProcess = buffer => {
+	 
+			const expressions = [ /(\{)/ , /(\})/ , /(\()/ , 
+													/(\))/ , /(\[)/ , /(\])/ , 
+													/(\;)/ , /(\:)/ , /(\=)/ , 
+													/(\+)/ , /(\-)/ , /(\*)/ , 
+													/(\<)/ , /(\/)/ , /(\,)/ , 
+													/(\#\$\%\^)/, 
+													/(module)/, /(function)/, /\n/] 
+		
+			buffer = buffer.replace(/(==)/g,'\#\$\%\^')
+			buffer = buffer.replace(/(!=)/g,'\@\^\!\^')
+			buffer = buffer.replace(/([\t])/g,'') 
+			buffer = buffer.split(/ /)
+			expressions.forEach( (regExp) => {
+				buffer = lodash.flatten(buffer.map(tkn => tkn.split(regExp)))  	
+			})
 
-		// These are funnctioned excluded from having arguments parsed in to json 
-		this.exclude = [ "translate" , "scale", "rotate" , "echo" ]  
-
-		this.globals = [] 
-		this.stack = 0 
-		this.tokens = [] 	
-		this.ntokens = [] 
-
-		// ----------------------------------------------------------
-		// Set character at position in index
-		// ----------------------------------------------------------
-		this.setCharAt = function(str,index,chr) {
-		  if(index > str.length-1) return str;
-		  return str.substr(0,index) + chr + str.substr(index+1);
+			buffer = buffer.map( tkn => tkn.replace(/(\#\$\%\^)/g,'===').replace(/(\@\^\!\^)/g,'!==') )  
+		
+			return buffer.filter( tkn => tkn !== '' ? true : false )   
 		}
 
-		// ----------------------------------------------------------
-		// buffer to a string 
-		// ----------------------------------------------------------
-		this.toStr = function( buffer ) {
-			var nstring = "" 
-			for ( var i = 0; i < buffer.length;i++ ) {
-				buffer[i] = buffer[i].replace(/([' '])/g,'')
-				nstring+=buffer[i]+"\n"  
-			}
-			return nstring 
+		// =========================================================================================
+		// Generate a hashed string
+		// =========================================================================================
+		const makeId = () => {  
+			const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+			return [0,0,0,0,0].map( tkn => possible.charAt(Math.floor(Math.random() * possible.length))).join('') 
 		}
 
-		// ----------------------------------------------------------
-		// trim comments 
-		// ----------------------------------------------------------
-		this.trimComments = function(string) {
-			for ( var i = 0; i < string.length; i++) { 
-  			var result = string[i].split(/(\/\/)/)	
- 				if ( result.length > 1 ) string[i] = result[0]
-	 		}	
-   		return string
- 		}
- 
-		// ----------------------------------------------------------
-		// Lex the input string
-		// ----------------------------------------------------------
-		this.load = function(buffer) { 
-			buffer = buffer.replace(/([\t])/g,'')
+		// =========================================================================================
+		// Is this token an operation // operations is currently global :( 
+		// =========================================================================================
+		const isToken = (tkn,ops) => {			
+			return ops.reduce( (stack,op) => op === tkn ? stack = true : stack , false )  
+		}
+
+		// =========================================================================================
+		// Is a token a string 
+		// =========================================================================================
+		const isString = token => {	
+			token = token.replace(/([A-Z-a-z])/g,'')
+			token = token.replace(/([0-9])/g,'')
+			token = token.replace(/(['_'])/g,'')
+			token = token.replace(/(['$'])/g,'') // because some variables start with $ 
+			token = token.replace(/(['_'])/g,'')  
 			
-			//buffer = buffer.replace(/(["eval"])/g,'')
-			//buffer = buffer.replace(/(["Function"])/g,'')
-
-			buffer = buffer.split(/(\{)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 	
-			buffer = buffer.split(/(\})/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\()/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\))/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\[)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\])/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\;)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\:)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\=)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\+)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer)
-			buffer = buffer.split(/(\-)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\*)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\>)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\<)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\/)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(\,)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split(/(module)/)
-			buffer = lodash.flatten( buffer )  
-			buffer = this.toStr(buffer) 
-			buffer = buffer.split("\n")
-			buffer = this.trimComments(buffer) 	 
-			for ( var i = 0; i < buffer.length; i++ ) { 
-				if ( buffer[i] != '' ) this.tokens.push(buffer[i]) 
-			}
+			return token.length === 0 ? true : false
 		}
-
-		// ----------------------------------------------------------
-		// Is a token in the in the list
-		// ----------------------------------------------------------
-		this.isAssigned = function(token,lst) {
-			if ( token === undefined ) var token = this.tokens[this.stack]  
-			for ( var i = 0; i < lst.length; i++ ) { 
-				if ( token === lst[i] ) return true 
-			}
-			return false
-		}
-
-		// ----------------------------------------------------------
+	
+		// =========================================================================================
 		// Is a token a number ?
-		// ----------------------------------------------------------
-		this.isNumber = function(token) {
+		// =========================================================================================
+		const isNumber = token => {
 			if ( token === undefined ) var token = this.tokens[this.stack]
 			token = token.replace(/([0-9])/g,'')
 			token = token.replace(/([.])/g,'')
@@ -165,616 +98,623 @@
 			return token.length === 0 ? true : false
 		}
 
-		// ----------------------------------------------------------
-		// Is a token a string ?
-		// ----------------------------------------------------------
-		this.isString = function(token) {	
-			if ( token === undefined ) var token = this.tokens[this.stack]  
-			token = token.replace(/([A-Z-a-z])/g,'')
-			token = token.replace(/([0-9])/g,'')
-			token = token.replace(/(['_'])/g,'')
-			return token.length === 0 ? true : false
-		}
-
-		// ------------------------------------------------------------
-		// Is token in list 
-		// ------------------------------------------------------------
-		this.isInList = function( lst , tokens) { 
-			if ( tokens === undefined ) var tokens = this.tokens
-			var i = 0 
-			for ( i = 0; i < lst.length; i++ ) { 
-				if ( tokens[this.stack] === lst[i] ) return true 
-				if ( lst[i] === "STRING" ) { if ( this.isString(tokens[this.stack]) ) return true }
-			}
-			return false 
-		}
-
-		// ------------------------------------------------------------
-		// Walk a tree 
-		// ------------------------------------------------------------
-		this.walk = function( tree ) { 
-			var i = 0
-			var state = true
-			while ( state === true && i < tree.length ) {  
-				if ( this.isInList(tree[i][0]) ) { tree[i][1](); state = true } else { tree[i][2](); state = false }	  
-				i++	
-			}
-		}
-
-		// -----------------------------------------------------------
-		// increment stack 
-		// -----------------------------------------------------------
-		this.next = function() { this.stack++; } 
-
-		// -----------------------------------------------------------
-		// Copy current token to new tree	
-		// -----------------------------------------------------------
-		this.copy = function(target) { 
-			if ( target === undefined ) { this.ntokens.push( this.tokens[this.stack] ) } else { target.push(this.tokens[this.stack]) }
-			this.next()	
-		}
-
-		// -----------------------------------------------------------
-		// Grab range of tokens from tree
-		// -----------------------------------------------------------
-		this.grab = function( st , en ) { 
-			var chnk = [] 
-			var i = 0 
-			for ( i = st; i < en; i++ ) { chnk.push( this.tokens[i] ) } 
-			return chnk 		
-		}
-
-		// -----------------------------------------------------------
-		// find matching closure 
-		// -----------------------------------------------------------
-		this.findPair = function(a,b,index,lst) { 
-			var i = 0, o = 0 , c = 0 
-			if ( lst === undefined ) { lst = this.tokens }
-			for ( i = index; i < lst.length; i++ ) { 
-				if ( lst[i] === a ) o++ 
-				if ( lst[i] === b ) c++ 	
-				if ( o === 0 && c === 0 ) break 
-				if ( o === c ) return i 
-			}
-			return -1
-		}
-
-		// ----------------------------------------------------------
-		// remove duplicates
-		// ----------------------------------------------------------
-		this.removeDuplicates = function(lst) {
-			return lodash.uniqWith( lst , lodash.isEqual ) 
-		}
-
-		// ----------------------------------------------------------
-		// seek a token 
-		// ----------------------------------------------------------
-		this.seek = function(tkn,tokens,ind) { 
-			if ( tokens === undefined ) var tokens = this.tokens
-			if ( ind === undefined ) var ind = this.stack  
-			for ( var i = ind; i < tokens.length; i++ ) { 
-				if ( tokens[i] === tkn ) return i 
-			}
-			//console.log("Did not find " , tkn ) 
-			return false 
-		}
-
-		// ----------------------------------------------------------
-		// cross out a series of tokens 
-		// ----------------------------------------------------------
-		this.delete = function( start , end ) { 
-			for ( var i = start; i < end; i++ ) { this.tokens[i] = "*" } 
-		}
-
-		// --------------------------------------------------------
-		// Generate a hashed string
-		// --------------------------------------------------------
-		this.makeId = function() {
-			var text = "";
-			var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-			for( var i=0; i < 5; i++ )
-			text += possible.charAt(Math.floor(Math.random() * possible.length));
-			return text;
-		};
-
-		// -------------------------------------------------
-		// Insert a token in to target at i 
-		// -------------------------------------------------
-		this.insert = function( i , tkns , target ) { 
-			var ii = 0 
-			if ( target === undefined ) { 
-				target = this.tokens
-			}
-			for ( ii = 0; ii < tkns.length; ii++ ) target.splice( i , 0 , tkns[ii] ) 
-		}
-
-		// ---------------------------------------------------------------
-		// Take arguments to function and split up in to array 
-		// ---------------------------------------------------------------
-		this.splitArguments = function(start,end) {
-			var i =0,ii=0,token_depth=0,splits=[],chk="",args=[]
-			for ( i = start; i < end; i++ ) { 
-  			if ( token_depth === 0 && this.tokens[i] === "," ) splits.push(i)
-    		if ( this.tokens[i] === "[" || this.tokens[i] === "(" ) token_depth++
-    		if ( this.tokens[i] === "]" || this.tokens[i] === ")" ) token_depth--
-  		}
-			
-			splits.push(end)  
-
-			for ( i = 0; i < splits.length; i++) {
-  			var end = splits[i]
-    		for ( ii = start; ii < end; ii++) { if ( start === ii && this.tokens[ii] === ",") { /* do nothing */ } else { chk+=this.tokens[ii] } }
-    		args.push(chk)
-    		chk=""
-   			start = end
-  		}
-			return args 
-		}
-
-		
-		// -----------------------------------------------------------
-		// Check closure is complete 
-		// -----------------------------------------------------------
-		this.isClosed = function() { 
-			var start = "" , end = "", state = true , i = 0 
-			// Now check the closure for conformance 
-			for ( i = 0; i < this.tokens.length; i++ ) { 
-				if ( this.tokens[i] === "(" ) { start = "("; end = ")" } 
-				if ( this.tokens[i] === "{" ) { start = "{"; end = "}" }
-				if ( this.tokens[i] === "[" ) { start = "["; end = "]" }   
-				if ( start !== "" && end !== "" ) { 
-					var result = this.findPair(start,end,i)
-					if ( result === -1 ) { state = false}
-				}
-				start=""
-				end=""
-			}
-			return state
-		}
-
-		// ==========================================================
-		// process boolean operations union,intersection,difference,minkowski
-		// ==========================================================
-		this.process_booleans=function() {  
-		 
-			this.tokens[ this.findPair("{","}",this.stack) ] = "\nthis."+this.tokens[this.stack-3]+"_end()\n"
-			this.ntokens.push("\nthis."+this.tokens[this.stack-3]+"()\n") 
-
-			// Note we know what comes after since the tree confirmed the '(',')','{' 
-			// but you can also see how a variation would break it. (a=b) for example. 
-			// Also note how the closure has been transformed in to a stack operation. 
-			// difference() -> pushes to the csg stack 
-
-			this.next()
-		}
-
-		// ==========================================================
-		// Process openscad 'function arrays' in to functions 
-		// ==========================================================
-		this.process_functions = function() {
-			var function_name = this.tokens[this.stack-1] // name of module 	
-			this.exclude.push(function_name) // exclude from parsing arguments 
-			this.modules.push(function_name) // but also treat as module 
-			var p =  this.findPair("(",")",this.stack)  // get the end index p of arguments closure  		 
-			var chk = this.grab(this.stack, p )
-			this.ntokens.push( "\nthis." , function_name , "=" , "function" )
-			for ( var i = 0; i < chk.length; i++ ) { this.ntokens.push( chk[i] ) }
-			this.ntokens.push(")","{","return") 
-			var s = this.seek(";") 
-			if ( s!== false ) { // probably broken right now 
-				var chk = this.grab( p+2 , s )
-				for ( var i = 0; i < chk.length; i++ ) { this.ntokens.push( chk[i] ) } 
-		 		this.ntokens.push("}") 
-				this.stack=s+1
-			}
-		}
-
-		// ========================================================================
-		// cut out anything that is in a module or function leaving globals behind
-		// ========================================================================
-		this.process_globals = function() {
-			var p =  this.findPair("(",")",this.stack) 		  		 
-			this.stack = p + 1 
-			if ( this.tokens[this.stack] === "=" ) { 
-				this.stack = this.seek(";") + 1
-				//if ( this.stack === false ) console.log( "Error processing globals" )   
-			}
-			else if ( this.tokens[this.stack] === "{" ) { 
-				this.stack = this.findPair("{","}",this.stack)+1 
-			}
-		}
-
-		// ===============================================================================
-		// find variables in the remaining global tokens left over from processing globals 
-		// ===============================================================================
-		this.sort_globals = function() { 		  
-			if ( !this.isAssigned(this.tokens[this.stack],this.standard) && 
-						this.isString(this.tokens[this.stack]) && 
-						!this.isNumber(this.tokens[this.stack]) && 
-						this.tokens[this.stack+1] === '=' ) { 
-						this.globals.push(this.tokens[this.stack]) 
-			} 
-			this.next()
-		}
-
-		// ==========================================================
-		// Process modules in to functions and arguments in to json 
-		// ==========================================================
-		this.process_arguments = function() { 
-			var module_name = this.tokens[this.stack-1] // name of module 
-			this.modules.push(module_name) 
-			this.ntokens.push("\nthis." + module_name + " = function(){") // then our rephrasing of function 		
-			var p =  this.findPair("(",")",this.stack)  // get the end index p of arguments closure  
-			var chk = this.grab(this.stack+1, p )       // get the section between stack and p of tokens
-			var args = []  
-			for ( var i = 0; i < chk.length; i+=4 ) {     // push our passed arguments to scope of operations object  
-				if ( chk[i+2] !== undefined ) { 		
-					this.ntokens.push( "var " + chk[i+0] + " = this.default(arguments[0]['"+chk[i+0]+"']," + chk[i+2] + ")\n" )                     
-				}    
-			} 
-			this.stack = p + 1
-			// now find variables that are not arguments and require var 
-			var lst = [] 
-			var q = this.findPair("{","}", this.stack) 
-			var sec = this.grab( this.stack+1 , q ) 
-			for ( var i = 0; i < sec.length; i++ ) {
-				var found = false
-		 		for ( var ii = 0; ii < chk.length; ii+=4 ) {
-					if ( sec[i] === chk[ii] ) found = true 	   
-				}
-				if ( found !== true ) { 
-					if ( !this.isAssigned(sec[i],this.standard) && this.isString(sec[i]) && !this.isNumber(sec[i]) && sec[i+1] === '=' ) { 
-						lst.push(sec[i]) 
-					}
-				} 
-			} 
-			lst = this.removeDuplicates(lst) 
-			if ( lst.length !== 0 ) { // we actually had variables 
-				this.ntokens.push( "var " ) 
-				for ( var i = 0; i < lst.length; i++ ) { 
-					if ( i === 0 ) { this.ntokens.push( lst[i] ) } else { this.ntokens.push( "," , lst[i] ) }
-				} 
-				this.ntokens.push("\n") 
-			}
-
-			this.next()	// move to next item in stack 
-		}
-
-		// ==========================================================
-		// Convert all arguments to Json
-		// ==========================================================
-		this.process_arguments_toJson = function() {
-			var i = 0 , arg_num = 0 , comma = ""    
-			var p = this.findPair("(",")",this.stack) 
-			var args = this.splitArguments( this.stack+1 , p ) 
-			this.ntokens.push(this.tokens[this.stack-1],"(")
-			for ( i = 0; i < args.length; i++ ) { 
-				if ( this.seek("=",args[i],0) !== false ) { // Was it a variable assignment a = b 
-					args[i] = args[i].replace("=",":")  
-					arg_num++
-				}
-				else { // Then it is either a number or a string or something complex like array. 
-						args[i] = "arg"+arg_num+":"+args[i]
-						arg_num++
-				}
-				this.ntokens.push( comma , args[i] ) 
-				comma = ","
-			}
-			this.stack = p  
-		}
-
-		// ==========================================================
-		// Process trig functions 
-		// ==========================================================
-		this.process_trig = function() {
-			this.ntokens.push(" this.")
-			this.ntokens.push(this.tokens[this.stack-1]) 
-		}
-
-		// =====================================================================
-		// Process operations 
-		// ===================================================================== 
-		this.process_operations = function() {  
-			this.stack--; // because we moved forwards on '(' but we want to be on the operation 
-			this.ntokens.push("\nthis."+this.tokens[this.stack])+"\n"
-			var operation = this.tokens[this.stack]
-			this.next()
-			// closure around operations which we CANNOT disguard	
-			var p =  this.findPair("(",")",this.stack)
-			if ( this.tokens[p+1] === "{" ) { 
-				var q = this.findPair("{","}",p+1)
-				this.tokens[p+1]=""
-				if ( q !== -1 ) this.tokens[q]="\nthis.stack_decrement(1)\n" 
-			}  
-			this.ntokens.push("(")	
-				var chk = this.grab(this.stack+1, p )       
-				this.ntokens.push("{")
-				for ( var i = 0; i < chk.length; i++ ) {
-					if ( chk[i] === "=" ) { this.ntokens.push(":") } else { this.ntokens.push(chk[i]) }   
-					this.next()
-				}	
-				this.ntokens[this.ntokens.length] = "}"
-		
-			this.next()
-		}
-
-		// ============================================================
-		// Attempt to fix loose /  implied closure
-		// ()  (){ (){ (); (())  (());   (())  ();   } ()  ()  ();       } 
-		// (){ (){ (){ (); (  ){ (  ); } (  ){ (); } } (){ (){ (); } } } }
-		// ============================================================
-		this.fixClosure = function() { 
-			var i , ii , closure = [] , index = [] , p_closure = 0    
-			var lst = [ "(" , ")" , "{" , "}" , ";" ]
-		
-			// generate list of pure closure and hash table so we can merge fixed closure back in when done 
-			for ( i = 0; i < this.tokens.length; i++ ) { 
-				if ( this.isAssigned(this.tokens[i],lst) ) {
-					var id = this.makeId()
-					closure.push(this.tokens[i]) 
-					index.push( { token: this.tokens[i] , index: i , hash: id , state: false  , additions: [] } ) 
-					this.tokens[i] = id
-				}
-			}  
-			// Any sub closure contained in primary closure becomes false giving us clean condensed closure list 
-			i = 0 
-			while ( i < closure.length ) { 
-				var p = this.findPair("(",")",i,closure)
-				if ( p!==-1 ) {
-					index[i]['state']=true
-					index[p]['state']=true
-					i = p					 
-				}
-				else if ( closure[i] === "{" || 
-									closure[i] === "}" ||
-									closure[i] === ";" 	  ){
-					index[i]['state']=true
-				} 
-				i++
-			}
-			// now repair bad closure on the rules )( => ){( , } => } + }*p_closure , ; => + }*p_closure  
-			i = 0
-			while ( i < closure.length) { 
-				if ( closure[i+0] === ")" && closure[i+1] === "(" && index[i]['state'] === true && index[i+1]['state'] === true ) { 
-					index[i+0]['additions'].push("{"); 
-					p_closure++ 
-				} 
-				else if ( closure[i]==="{" && index[i]['state'] === true && p_closure > 0 ) { 
-					var p = this.findPair("{","}",i,closure)
-					for ( var ii = 0; ii < p_closure; ii++ ) index[p]['additions'].push("}")
-					p_closure = 0 
-				}
-				else if ( closure[i]===";" && index[i]['state'] === true && p_closure > 0 ) { 
-					for ( var ii = 0; ii < p_closure; ii++ ) index[i]['additions'].push("}")
-					p_closure = 0 
-				} 
-				i++	 
-			}
-			// reinsert repaired closure 
-			for ( i = 0; i < index.length; i++ ) { 
-				var hash = index[i]['hash'] 
-				for ( ii = 0; ii < this.tokens.length; ii++ ) { 
-					if ( this.tokens[ii] === hash ) { 
-						this.tokens[ii] = index[i]['token'] 
-						this.insert( ii+1 , index[i]['additions'].reverse() ) 
-					}
-				}
-			}
-			if ( this.isClosed() === false ) { 
-				callback.updateLog("Incomplete or Malformed Closure\n")  
-				return false   
-			}
-
+		// =========================================================================================
+		// Tokens : find matching closure 
+		// =========================================================================================
+		const findPair = (lft,rt,lftCount,rtCount,index,lst,pullThrough) => { 
+			pullThrough(lst[index]) === lft ? lftCount++ : lftCount  
+			pullThrough(lst[index]) === rt ? rtCount++ : rtCount  
+			return ( index > lst.length ) ? -1 
+				: ( lftCount === 0 && rtCount === 0 ) ? -1 
+				: ( lftCount === rtCount ) ? index 
+				: findPair(lft,rt,lftCount,rtCount,index+1,lst,pullThrough)
 		}
 	
-		// ==========================================================
-		// Handle parsing for next loops
-		// ==========================================================
-		this.process_forloops = function() { 
-			var p =  this.findPair("(",")",this.stack)
-			var chk = this.grab(this.stack+1, p )  
-			var variable = chk[0] 
-			var arg = ""
-			var fields = [] 
-			for ( var i = 3; i < chk.length-1;i++ ) {
-				if ( chk[i] === ":" ) { fields.push(arg); arg = "" } else { arg+=chk[i] } 
-			}  
-			fields.push(arg) 
-			if ( fields.length === 2 ) { // [0:10]
-				if ( fields[0] < fields[1] ) {  // positive increment
-					this.ntokens.push("for","(", variable , "=" , fields[0] , ";" , variable , "<=" , fields[1] , ";" , variable , "++" )    
-				}
-				else { // negative increment 
-					this.ntokens.push("for","(", variable , "=" , fields[0] , ";" , variable , ">=" , fields[1] , ";" , variable , "--" )    
-				}
-			} 		
-			else if ( fields.length === 3 ) { //  [0:45:360]
-				if ( fields[0] < fields[2] ) {  // positive increment
-					this.ntokens.push("for","(", variable , "=" , fields[0] , ";" , variable , "<=" , fields[2] , ";" , variable , "+=" , fields[1] )    
-				}
-				else { // negative increment 
-					this.ntokens.push("for","(", variable , "=" , fields[0] , ";" , variable , ">=" , fields[2] , ";" , variable , "-=" , fields[1] )    
-				}  
-			}
-			else { 
-				// we must be a for each 
-			}
-			this.stack = p  
-		}
-
 		// =============================================================
-		// This language contains so many stupid random fringe cases 
-		// none of which seem to feature any sane or meaningful closure
+		// enumerate through a json data structure 
 		// =============================================================
-		this.process_assign = function() {
-			postLog( "This code contains assigns. These are depreciated since 2015.03." )
-			this.next() 
+		const enumerate = ( data , task , eva ) => {
+			task( data )  
+			data.state = eva( data ) 
+			return data.state ? enumerate ( data , task , eva ) : data  
 		}
 
-		// ==========================================================
-		// dump output to console 
-		// ==========================================================
-		this.dump = function() {
-			var lines = ""	
-			for ( var i = 0; i < this.ntokens.length; i++ ) {
-				if ( this.ntokens[i] === "}" ) this.ntokens[i] += "\n" 
-				if ( this.ntokens[i] === ";" ) this.ntokens[i] += "\n" 
-				if ( this.ntokens[i] === "{" ) this.ntokens[i] = "\n" + this.ntokens[i]  
-				if ( this.ntokens[i] === "}" ) this.ntokens[i] = "\n" + this.ntokens[i]   
-				if ( this.ntokens[i] === ")" ) this.ntokens[i] = "\n" + this.ntokens[i] 
-				if ( this.ntokens[i] === ";" ) this.ntokens[i] = "\n" + this.ntokens[i] 
-				if ( this.ntokens[i][0] === "/" && this.ntokens[i][1] === "/" ) this.ntokens[i] = "\n" + this.ntokens[i] + "\n"
-				lines+=this.ntokens[i]
-			}
-			return lines 
+		// =========================================================================================
+		// Convert stream to string 
+		// =========================================================================================
+		const streamToString = stream => stream.reduce( (stack,tkn) => stack + tkn + " ", '' )  
+
+		// =========================================================================================
+		// Build list of modules from stream 
+		// =========================================================================================
+		const buildList = (stream,nme) => {
+			let stack = [] 
+			stream.forEach( (element,index) => {
+				if ( element === nme ) stack.push( stream[index+1] )   
+			})
+			return stack 
 		}
 
-		this.dump_raw = function() { 
-			console.log( this.ntokens ) 
-		}
+		// ======================================================
+		// convert function declarations to js functions 
+		// ======================================================
 
-		// ==========================================================
-		// start here to begin walking tree 
-		// ==========================================================
-		this.start = function() { 
+		//function polar_to_cartesian (polar) = [
+		//	polar[1]*cos(polar[0]),
+		//	polar[1]*sin(polar[0])
+		//];
 
-			var _this = this // 'this' in current scope ( start ) 
-			
-			// Repair implied closure 
-			if ( this.fixClosure() === false ) { 
-				return false 
-			}
-			else {    
-				
-			
-				// This one is a bit of a strange double while for clearing out everything global 
-				// before appending this. to all global variables. 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-						[["function","module"],function(){_this.next()            },function(){ _this.sort_globals() }], 
-						[["STRING"           ],function(){_this.next()            },function(){ _this.sort_globals() }], 
-						[["("                ],function(){_this.process_globals() },function(){ _this.sort_globals() }]  
-					])
+		//function polar_to_cartesian(polar) { return (data) => [ polar[1]*cos(polar[0]), polar[1]*sin(polar[0]) ]; } 
+
+		const reformatFunctions = stream => { 
+			// *** enumerate task func
+			const task = (data) => { 
+				let rowA = data.stream[data.index]
+				if ( rowA.fBody !== false ) { 
+					rowA.head = lodash
+						.flatten([ 'function' , rowA.tkn , '(',rowA.funParam ,')', '{' , 'return' , rowA.fBody.slice(1,rowA.fBody.length) , '}' ])  
+					data.stream[data.index] = rowA
 				}
+				data.index++ 
+				return data 
+			} 
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva )
+				.stream.reduce( (stack,row) => row.tkn !== '' ? stack.concat(row) : stack ,[])  
 
-				var ii = 0
-				this.stack = 0
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens
-					for ( ii = 0; ii < this.globals.length; ii++ ) {
-						if ( this.tokens[this.stack] === this.globals[ii] ) this.tokens[this.stack] = "this."+this.tokens[this.stack]  
+		}
+
+		// =======================================================
+		// convert module declarations to js functions 
+		// =======================================================
+		const reformatModules = stream => { 
+			// *** enumerate task func
+			const task = (data) => { 
+				let rowA = data.stream[data.index] 
+				if ( rowA.mod === true ) {
+					rowA.head = lodash.flatten([ 'function' , rowA.tkn , '(','{', rowA.modParam , '}' , ')' ])   	 
+					data.stream[data.index] = rowA
+				}
+				data.index++ 
+				return data 
+			} 
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva )
+				.stream.reduce( (stack,row) => row.tkn !== '' ? stack.concat(row) : stack ,[])  
+		} 
+
+		// ==================================================
+		// Reformat calls to functions to be of a jsn format 
+		// ==================================================
+		const reformatCalls = stream => { 
+			// *** Take arguments to function and split up in to array
+			const argumentsToJson = (stream) => {
+				let parameters = stream.slice( 0 , stream.length )   
+				//  *** enumerating task for argumentsToJson
+				let consumeDepth = (data) => {
+					const tkn = data.parameters[data.index] 
+					if ( tkn === data.lft ) { data.e = findPair(data.lft,data.rht,0,0,data.index,data.parameters,tkn=>tkn) }
+					( data.index <= data.e && data.e > 0 ) ? data.parameters[data.index] = "|||||"+data.parameters[data.index] : data.e = 0 
+					data.index++ 
+					return data
+				} 
+				//  enumerating condition for enumerate for argumentsToJson	
+				let evaConsumeDepth = (data) => { return data.index < data.len ? true : false }
+				parameters = enumerate({ state:true , index: 0 , lft: '(' , rht: ')' , e: 0 , 
+					parameters: parameters , len: parameters.length } , consumeDepth , evaConsumeDepth ).parameters 
+				parameters = enumerate({ state:true , index: 0 , lft: '[' , rht: ']' , e: 0 , 
+					parameters: parameters , len: parameters.length } , consumeDepth , evaConsumeDepth ).parameters 
+				parameters = enumerate({ state:true , index: 0 , lft: '{' , rht: '}' , e: 0 , 
+					parameters: parameters , len: parameters.length } , consumeDepth , evaConsumeDepth ).parameters 
+				if ( parameters[0] === ' ' ) parameters[0]="' '" // if the parameter was empty 		
+				parameters = [","].concat( parameters ) // since all valid expressions begin with comma add one for first expression 
+				// build index of tkn after ',' Is next token followed by relation or is it something else? 
+				//If something else becomes argument. Otherwise becomes key : value pair
+				const table = parameters.reduce( ( stack , tkn , index ) => tkn === ',' ? stack.concat(index+1) : stack , [] ) 
+				table.forEach( (offset,index) => { 
+					if ( isString(parameters[offset]) && parameters[offset+1] === "=" ) { 
+						 parameters[offset+1] = ":" 
+					}
+					else { 
+					 isString(parameters[offset]) || isNumber(parameters[offset]) ?  parameters[offset] = "arg: " + parameters[offset]  
+						 : parameters.splice( offset , 0 ,  "arg" , ":" )	
+					} 		  
+				})	
+				return ['(','{'].concat(parameters.map( tkn => tkn.replace("|||||",'')).slice(1,parameters.length).concat(['}',')']))
+			}
+			// *** enumerating task for reformatCalls
+			const task = (data) => { 
+				let row = data.stream[data.index] 	
+				if ( row.modParam !== false && row.mod === false ) {  
+					row.modParam = argumentsToJson( row.modParam )
+					data.stream[data.index] = row  
+				}
+				if ( row.csgParam !== false ) {  
+					row.csgParam = argumentsToJson( row.csgParam )
+					data.stream[data.index] = row
+				}
+				data.index++
+				return data
+			} 
+			// *** enumerating condition for reformatCalls
+			const eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate( { state:true , index : 0 , stream: stream , len: stream.length } , task , eva ).stream  
+		}
+
+		// =============================================================================
+		// Reformats for loop(s) in to js format. Does not handle forEach equivalents yet
+		// =============================================================================
+		const reformatLoops = stream => { 
+			// *** enumerateing task 
+			const task = (data) => { 
+				let rowA = data.stream[data.index] 
+				if ( rowA.forParam !== false ) { 
+					debugger; 
+					const parameter = rowA.forParam			
+	 				const variable = parameter[0] 
+					rowA.head = [ 'if (',  variable , '=== undefined ) { var ' , variable , ' }' ]  
+					const fields = parameter.slice( 3 , parameter.length-1 )
+						.reduce( (stack,tkn) => tkn !== ":" && tkn !== ")" && tkn !== "]" ? stack.concat(tkn) 
+							: stack ,[])  
+					if ( fields.length === 2 ) { // [0,10]
+						rowA.head = fields[0] < fields[1] ?
+							 rowA.head.concat(["for",'(',variable,"=",fields[0],";",variable,"<=",fields[1],";",variable,"++",')'])// + 
+							: rowA.head.concat(["for",'(',variable,"=",fields[0],";",variable,">=",fields[1],";",variable,"--",')'])//-   		
 					} 
-					this.next()
+					if ( fields.length === 3 ) { //  [0,45,360]
+						rowA.head = fields[0] < fields[2] ?
+							rowA.head.concat([ "for",'(',variable,"=",fields[0],";",variable,"<=",fields[2],";",variable,"+=",fields[1],')'])//+ 
+							: rowA.head.concat(["for",'(',variable,"=",fields[0],";",variable,">=",fields[2],";",variable,"-=",fields[1],')'])//-   
+					}  
+					// if fields.length != 2 || 3 are we a forEach? will contain , values if we are
+					data.stream[data.index] = rowA
 				}
-				// Note that before this point everything was existing tree altering. This is ugly and needs a rethink 
-
-				// parse boolean instructions
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 	
-					this.walk([ // traverse a descent tree of boolean instr till we reach a goal ( sometimes another start ) 
-						[ ["difference" , "intersection" , "union" , "minkowski"] , function(){ _this.next() }             , function(){ _this.copy() } ] ,
-						[ ["("                                     ] , function(){ _this.next() }             , function(){ _this.copy() } ] , 
-						[	[")"                                     ] , function(){ _this.next() }             , function(){ _this.copy() } ] , 
-						[	["{"                                     ] , function(){ _this.process_booleans() } , function(){ _this.copy() }]                        
-					]) 	  
-				} 
-
-				// parse function instructions
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-						[["function"],function(){_this.next() },function(){ _this.copy() }], // are we a function 
-						[["STRING"],function(){_this.next() },function(){ _this.copy() }], // do we have a string name 
-						[["("     ],function(){_this.process_functions() },function(){_this.copy()}]  
-					])
-				}
-
-				// parse modules
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-						[["module"],function(){_this.next() },function(){ _this.copy() }], // are we a module 
-						[["STRING"],function(){_this.next() },function(){ _this.copy() }], // do we have a string name 
-						[["("     ],function(){_this.process_arguments() },function(){_this.copy()}]  
-					])
-				}
-				
-				// Process arguments in to json strings   
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-						[_this.modules , function(){ _this.next()          }, function(){  _this.copy() }] ,
-						[["("  ]  , function(){ _this.process_arguments_toJson() }, function(){ 	 
-							_this.ntokens.push( _this.tokens[_this.stack-1] ) // make sure to include previous token if we failed 
-							_this.copy() 
-						}]
-					])
-				}
-			
-				// parse openscad operations ( rotate , translate , scale ... )   
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-						[_this.modules , function(){ _this.next()          }, function(){ _this.copy() } ] ,
-						[["("  ]  , function(){ _this.process_operations() }, function(){ 
-							_this.ntokens.push( _this.tokens[_this.stack-1] ) // make sure to include previous token if we failed 
-							_this.copy() 
-						}]
-					])
-				}
-
-				// parse for loops   
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-		 				[["for"] , function(){ _this.next()              }, function(){ _this.copy() } ] ,
-						[["("  ]  , function(){ _this.process_forloops() }, function(){ _this.copy() }]
-					])
-				}
-
-				// parse trig instructions   
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-		 				[["sin","cos","atan2","pow","sqrt","min","max"] , function(){ _this.next() }, function(){ _this.copy() } ] ,
-						[["("  ]  , function(){ _this.process_trig() }, function(){ _this.copy() }]
-					])
-				}
-
-				// parse assign instructions   
-				this.tokens = this.ntokens 
-				this.ntokens = [] 
-				this.stack = 0 
-				while ( this.stack < this.tokens.length ) { // walk our stack of tokens 
-					this.walk([
-		 				[["assign"] , function(){ _this.process_assign() }, function(){ _this.copy() }] 
-					])
-				}
-		
+				data.index++
+				return data 
 			}
+			// *** enumerateing condition 
+			let eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate( { index: 0 , stream : stream , len : stream.length , state: true  },task,eva).stream 
 		}
 
+		// =======================================================
+		// convert assignments to 'let'  
+		// =======================================================
+		const reformatVariables = stream => { 
+			// *** enumerate task func
+			const task = (data) => { 
+				let rowA = data.stream[data.index]
+				if ( rowA.varParam !== false  ) {			
+					rowA.head = lodash.flatten([ 'if (', rowA.tkn , '=== undefined ) { var ' , rowA.tkn , ' }' , rowA.tkn , rowA.varParam ])    	
+					data.stream[data.index] = rowA
+				}
+				data.index++ 
+				return data 
+			} 
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
+			return stream 
+		}
+
+	 	// =======================================================
+		// convert csg operations to stack operations  
+		// =======================================================
+		const reformatGenOps = stream => {  
+			// *** enumerate task func
+			const task = (data) => { 
+				let rowA = data.stream[data.index]
+				// general operations 
+				if ( rowA.genParam !== false ) {			
+					rowA.head = lodash.flatten([ rowA.tkn , '(',rowA.genParam , ')' ])  
+					data.stream[data.index] = rowA
+				}
+				// else statements. Note that 'else if' statements will become else { if(){} }  
+				if ( rowA.els === true ) { 
+					rowA.head = lodash.flatten([ rowA.tkn ])  
+					data.stream[data.index] = rowA
+				}
+				data.index++ 
+				return data 
+			} 
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
+		} 
+
+	 	// =======================================================
+		// convert csg operations to stack operations  
+		// =======================================================
+		const reformatCsgOps = stream => {  
+			// *** enumerate task func
+			const task = (data) => { 
+				let rowA = data.stream[data.index]
+				if ( rowA.csgParam !== false ) {			
+					rowA.head = lodash.flatten([ 'stack.push(' , rowA.tkn , rowA.csgParam , ')' ])  
+					data.stream[data.index] = rowA
+				}
+				data.index++ 
+				return data 
+			} 
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			return enumerate ( { index : 0 , stream : stream , len : stream.length , state : true  } , task , eva ).stream 
+		} 
+
+		// =============================================================================
+		// Distributes attributes of tree to appropriate buckets 
+		// =============================================================================
+		const distributeTree = (stream) => { 
+			// Any operations we want to call at the JS level but that are 
+			// not directly native like sin/cos/sqrt.  
+			stream = stream.map( tkn => isToken(tkn,trigOps) ? "O"+tkn : tkn ) 
+			// *** Generate a row entry for a token. Break out arguments if it has any.   
+			const treeToBuckets = (data) => {
+					let tknA = data.stream[data.index]  
+					let tknB = data.stream[data.index+1] // look forward
+					let tknZ = data.stream[data.index-1] // look backward
+					let nRow = {  'id'         : makeId() , // id of row  
+												'children'   : false    , // row has children 
+												'mod'        : false    , // function definition 
+												'csgParam'   : false       , // csg parameters 
+												'genParam'   : false       , // general parameters 
+												'modParam'   : false       , // Module parameters
+												'funParam'   : false       , // Function parameters 
+												'fBody'      : false       , // Function Body 
+												'varParam'   : false       , // Variable parameters 	
+												'forParam'   : false       , // Loop Parameters
+												'els'        : false       , // else part of condition 
+		                    'parent'     : ''       , // parent of row 
+		                    'head'       : false    , // head of row
+		                    'tkn'        : tknA     , // tkn of row 
+		                    'tail'       : []       , // tail of row
+		                    'closure'    : []         // trailing closure     
+		                  } 
+					let parameters = false     // parameters 
+					let end = -1            // -1 if no end of closure pair found  
+					// if we have a sub chunk always just get it first 
+					if ( tknB === "(" ) { 
+						end = findPair('(',')',0,0,data.index+1,data.stream,tkn=>tkn)
+						if ( end !== -1 )  { 
+							parameters = data.stream.slice( data.index+2 , end ) 				 		  	
+							parameters.length === 0 ? parameters = [" "] : parameters 		
+						}		 
+					}
+					if ( end !== -1 ) { // we had some parameters  
+						// if we are csgOp or genOp or modOp pick up parameters and drop in correct bucket 
+						if ( isToken(tknA,csgOps) ) { nRow.csgParam = parameters; data.index = end } 
+		 				if ( isToken(tknA,genOps) ) { 
+							 tknA !== "for" ?  nRow.genParam = parameters 
+									: nRow.forParam = parameters // for is general operation but has own arg struc 
+							data.index = end 
+						}  
+						if ( isToken(tknA,modOps) ) { 
+							nRow.modParam = parameters;
+							if ( tknZ === "module" ) nRow.mod = true
+	 						data.index = end 
+						}   
+						// functions will also have a function body as well as parameter
+						if ( isToken(tknA,funOps) ) {
+							nRow.funParam = parameters;
+							if ( tknZ === "function" ) { 
+								let st = end+1 
+								end = findPair('=',';',0,0,st,data.stream,tkn=>tkn) 	
+								if ( end !== -1 ) {
+									nRow.fBody = data.stream.slice( st , end ) 
+								}	
+							}										   
+							data.index = end
+						}					
+					} 
+					// if we are none of the above perhaps we are a variable assignment ?
+					if ( nRow.csgParam === false && nRow.genParam === false && nRow.modParam === false && nRow.funParam === false && nRow.fBody === false ) { 
+						if ( isString(tknA) && tknB === "=" ) {   
+							end = findPair('=',';',0,0,data.index+1,data.stream,tkn=>tkn) // find tkns between = ; 						
+							nRow.tkn = tknA.replace("$",'DOLLAR_SIGN_') // dollar signs bad 
+							nRow.varParam = data.stream.slice( data.index+1 , end+1 )
+							data.index = end 
+						}
+						// if we have an else statement mark it. Becomes special case of general operation
+						if ( tknA === "else" ) { nRow.els = true }
+					}
+					data.result = data.result.concat(nRow)
+					data.index++ 
+					return data 
+			}
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			// process rows in stream in to sub groups  	
+			return enumerate( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , treeToBuckets , eva )
+				.result 
+					.reduce( (stack,row) => row.tkn !== "module" && row.tkn !== "function" ? stack.concat(row) : stack , [] ) 
+
+		}
+
+		// =============================================================================
+		// Bulds Par/Child linked list of operations
+		// =============================================================================
+		const buildFullTree = (table) => {
+				// *** Build parent / child relationship graph 
+			const buildRelations = (data) => { 
+				let rowA = data.table[data.index]
+				let rowB = data.table[data.index+1] // now needs to pick up offset somehow 		 
+				// parent child relationship  
+				if ( isToken(rowA.tkn,csgOps) || isToken(rowA.tkn,genOps) || isToken(rowA.tkn,modOps) ) { 	//is operation
+					if ( rowB.tkn === "{" ) { // has closure	
+						data.table = setChildren(data.table,rowA.id,'{','}',data.index)  
+						data.table[data.index].children = true 		
+					}	
+					if( isToken(rowB.tkn,csgOps) || 
+							isToken(rowB.tkn,genOps) || 
+							isToken(rowB.tkn,modOps) || 
+							isToken(rowB.tkn,funOps) ) { // is another operation following on 
+						data.table[data.index+1].parent = rowA.id
+						data.table[data.index].children = true  
+					}
+				}			
+				data.index++ 
+				return data 
+			}
+			// *** Set group of children within {} to parent id 
+			const setChildren = (table,id,lft,rht,st) => { 
+				const end = findPair(lft,rht,0,0,st+1,table,rec=>rec.tkn) 
+				if ( end !== -1 ) { 
+					table.forEach( (row,index) => {
+						if ( index > st && index < end ) row.parent = id 	
+					})
+				} 
+				return table 
+			}
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			// build parent / child relationship and eliminate unwanted tokens 
+			return enumerate( { state : true , index: 0 , table: table , len: table.length-1 } , buildRelations , eva )
+				.table
+					.reduce( (stack,row) => 
+							row.csgParam !== false || 
+							row.genParam !== false || 
+							row.modParam !== false || 
+							row.funParam !== false ||
+							row.fBody    !== false || 
+							row.varParam !== false || 
+							row.forParam !== false ||
+							row.els      !== false     ? stack.concat(row) : stack ,[])	 
+		} 
+
+		// =======================================
+		// construct code back out from tree 
+		// =======================================
+		const codeFromTree = (stream) => { 		
+			//stream.map( (row) => [{ id: row.id , parent: row.parent , children: row.children ,  token: row.tkn }] ) ) 
+			// All terminal nodes as indicated in build tree function by children = false  
+			const terminals = stream.reduce( (stack,row,index) => row.children === false ? stack.concat( index ) : stack , [] ) 
+			// *** enumerate task works from terminals to specified roots to find the 'furthest' child  
+			const task = (data) => { 
+				const row = data.stream[data.index]  
+				if ( row.id === data.id ) { 
+					if ( data.id === data.root ) data.result = true   
+					data.id = row.parent 
+				}	
+				data.index--
+				return data
+			}
+			// *** enumerate end 
+			const eva = (data) => { return data.index >= 0 ? true : false }
+			// iterate through every node specifing as root and handing to enumerate task to see if they own the specified terminal node 
+			let cStack = [] 
+			stream.forEach( row => {
+				let rStack = []   
+				terminals.forEach( term => {  	
+					let state = enumerate( { state : true , root: row.id , id: stream[term].id , index: term , stream: stream , result: [] } , task , eva )
+						.result 
+					 	if ( state === true && row.id !== stream[term].id ) { rStack.push( stream[term].id ) }
+				})
+				if ( rStack.length !== 0 ) cStack.push( { root: row.id , term : rStack[rStack.length-1]} )
+			}) 
+			// iterate through stream to find each root and each 'furthest' child. This is where we put our closure  
+			cStack.forEach( pair => { 
+				let csg = false , st = '{' , en = '}' 
+				stream.forEach( row => {
+					if ( pair.root === row.id ) { if ( isToken(row.tkn,csgOps) ) { csg = true } }
+					if ( csg === true ) { 
+						st = "\nstack.push(start())\n" 
+						en = "\nstack.push(end())\n" 
+					}
+					if ( pair.root === row.id ) { row.tail = row.tail.concat(st) } 
+					if ( pair.term === row.id ) { row.closure = row.closure.concat(en) }
+				})	
+			})
+			// generate concat of head tkn argument and tail for each row 
+			stream.forEach( (row) => { 		
+				if ( row.head === false ) { 
+					row.head = [row.tkn]
+					if ( row.csgParam !== false ) { row.head = row.head.concat( row.csgParam ) }
+					if ( row.modParam !== false ) { row.head = row.head.concat( row.modParam ) }
+					if ( row.genParam !== false ) { row.head = row.head.concat( row.genParam ) }
+					if ( row.funParam !== false ) { row.head = row.head.concat( row.funParam ) }
+					if ( row.varParam !== false ) { row.head = row.head.concat( row.varParam ) }
+					if ( row.forParam !== false ) { row.head = row.head.concat( row.forParam ) }
+				}
+				row.head = row.head.concat(row.tail)
+				row.head = row.head.concat(row.closure.reverse()) 	
+			})  
+			return stream  
+		} 
+
+		// ========================================================
+		// Basic reformatting of generated code before revaluation 
+		// ========================================================
+		const PolishOutput = stream => { 
+			let res = stream.reduce( (output,row) => {
+				output += "\n" + streamToString(row.head) + "\n" 
+				return output 				 
+			}, "" )   
+			return res 
+		} 
+
+			// =============================================================================
+		// reDistributes attributes of tree to appropriate buckets 
+		// =============================================================================
+		const reDistributeTree = (stream) => { 
+			// *** Generate a row entry for a token. Break out arguments if it has any.   
+			const treeToBuckets = (data) => {
+					let tknA = data.stream[data.index]  
+					let tknB = data.stream[data.index+1] // look forward
+					let tknZ = data.stream[data.index-1] // look backward
+					let nRow = {  'id'         : makeId() , // id of row  
+												'children'   : false    , // row has children 
+												'csgParam'   : false       , // csg parameters 
+		                    'parent'     : ''       , // parent of row 
+		                    'tkn'        : tknA     , // tkn of row 
+		                    'tail'       : []       , // tail of row
+		                    'closure'    : []         // trailing closure     
+		                  } 
+					let parameters = false     // parameters 
+					let end = -1            // -1 if no end of closure pair found  
+					// if we have a sub chunk always just get it first 
+					if ( tknB === "(" ) { 
+						end = findPair('(',')',0,0,data.index+1,data.stream,tkn=>tkn)
+						if ( end !== -1 )  { 
+							parameters = data.stream.slice( data.index+2 , end ) 				 		  	
+							parameters.length === 0 ? parameters = [" "] : parameters 		
+						}		 
+					}
+					if ( end !== -1 ) { // we had some parameters  
+						// if we are csgOp 
+						nRow.csgParam = parameters; 
+						data.index = end  
+					} 
+					data.result = data.result.concat(nRow)
+					data.index++ 
+					return data 
+			}
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			// process rows in stream in to sub groups  	
+			return enumerate( { state : true , index: 0 , stream: stream , len: stream.length , result : [] } , treeToBuckets , eva )
+				.result 
+				
+		}
+
+		// =============================================================================
+		// Bulds Par/Child linked list of operations
+		// =============================================================================
+		const reBuildFullTree = (table) => {
+				// *** Build parent / child relationship graph 
+			const buildRelations = (data) => { 
+				let rowA = data.table[data.index]
+				let rowB = data.table[data.index+1] // now needs to pick up offset somehow 		 
+				// parent child relationship  
+				if ( isToken(rowA.tkn,csgOps) ) { 	//is operation
+					if ( rowB.tkn === "{" ) { // has closure	
+						data.table = setChildren(data.table,rowA.id,'{','}',data.index)  
+						data.table[data.index].children = true 		
+					}	
+					if( isToken(rowB.tkn,csgOps) ) { // is another operation following on 
+						data.table[data.index+1].parent = rowA.id
+						data.table[data.index].children = true  
+					}
+				}			
+				data.index++ 
+				return data 
+			}
+			// *** Set group of children within {} to parent id 
+			const setChildren = (table,id,lft,rht,st) => { 
+				const end = findPair(lft,rht,0,0,st+1,table,rec=>rec.tkn) 
+				if ( end !== -1 ) { 
+					table.forEach( (row,index) => {
+						if ( index > st && index < end ) row.parent = id 	
+					})
+				} 
+				return table 
+			}
+			// *** enumerate end condition 
+			const eva = (data) => { return data.index < data.len ? true : false }
+			// build parent / child relationship and eliminate unwanted tokens 
+			return enumerate( { state : true , index: 0 , table: table , len: table.length-1 } , buildRelations , eva )
+				.table
+					.reduce( (stack,row) => 
+							row.csgParam !== false  
+							   ? stack.concat(row) : stack ,[])	 
+		} 
+
+
+		// general operations 
+		const genOps = [ "for","if" ,"else","module"] 
+
+		// constructive solids operations 
+		const csgOps = ["difference","intersection","union",
+											"circle", "sphere","translate",
+											"scale","rotate","cube",
+											"cylinder","linear_extrude","polygon",
+											"polyhedron","echo","colour","color",]
+
+		// closure operations 
+		const cloOps = [ ";" , "{" , "}" ] 
+
+		let modOps = []
+		let funOps = [] 
+
+		// Operations that shall be excluded from having arguments 	
+		const excOps = [ "else" , "function" ] 
+
+		const trigOps = [ "cos" , "sin" , "atan2" , "pow" , "sqrt" , "max" , "min" ] 
+
+		let gheader = "let stack = []; const start = () => ['{']; const end = () => ['}']; const union = (...args) => ['union','(',JSON.stringify(args[0]),')'];const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')']; const intersection = (...args) => ['intersection','(',JSON.stringify(args[0]),')']; const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')']; const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')']; const scale = (...args) => ['scale','(',JSON.stringify(args[0]),')']; const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')']; const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')']; const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')']; const color = (...args) => ['color','(',JSON.stringify(args[0]),')']; const polygon = (...args) => ['polygon','(',JSON.stringify(args[0]),')']; const circle = (...args) => ['circle','(',JSON.stringify(args[0]),')']; const echo = (...args) => ['echo','(',JSON.stringify(args[0]),')']; const version = (...args) => ['version','(',JSON.stringify(args[0]),')'];"
+
+
+		let header = "let stack = []; const start = () => ['{']; const end = () => ['}']; const union = (...args) => ['union','(',JSON.stringify(args[0]),')'];const difference = (...args) => ['difference','(',JSON.stringify(args[0]),')']; const intersection = (...args) => ['intersection','(',JSON.stringify(args[0]),')']; const translate = (...args) => ['translate','(',JSON.stringify(args[0]),')']; const rotate = (...args) => ['rotate','(',JSON.stringify(args[0]),')']; const scale = (...args) => ['scale','(',JSON.stringify(args[0]),')']; const cube = (...args) => ['cube','(',JSON.stringify(args[0]),')']; const sphere = (...args) => ['sphere','(',JSON.stringify(args[0]),')']; const cylinder = (...args) => ['cylinder','(',JSON.stringify(args[0]),')']; const color = (...args) => ['color','(',JSON.stringify(args[0]),')']; const polygon = (...args) => ['polygon','(',JSON.stringify(args[0]),');']; const circle = (...args) => ['circle','(',JSON.stringify(args[0]),');']; const echo = (...args) => ['echo','(',JSON.stringify(args[0]),')']; const version = (...args) => ['version','(',JSON.stringify(args[0]),')'];"
+
+
+	let trig = ' const truncate = (num, places) => num; const deg2rad  = (deg) => deg * (Math.PI/180);  const rad2deg  = (rad) => (rad * 180)/Math.PI; const Ocos     = (rad) => truncate(Math.cos(deg2rad(rad)),4); const Osin     = (rad) => truncate(Math.sin(deg2rad(rad)),4); const Oatan2   = (a,b) => truncate(Math.atan2(a,b),4); const Opow     = (a,b) => truncate(Math.pow(a,b),4);   const Osqrt    = (a)   => truncate(Math.sqrt(a),4);    const Omax     = (a,b) => truncate(Math.max(a,b),4);   const Omin     = (a,b) => truncate(Math.min(a,b),4);'  	
+
+		let footer = "foo({}); return stack"
+
+		this.testing = (scad) => { 
+
+			const src = preProcess( scad ) 
+		
+			// Module operations  
+			modOps = buildList( src , "module" )
+			funOps = buildList( src , "function" )
+
+			// 1. Generate parent/child tree
+			// 2. Reformat variable assignments
+			// 3. Reformat function call arguments to json  
+			// 4. Reformat module format to js functions 
+			// 5. Reformat loops to js loops 
+			// 6. convert all CSG operations to stack pushes 
+	
+			//const newTree = reformatLoops( reformatGenOps( 
+			//	reformatVariables( reformatCsgOps( reformatCalls( reformatModules( reformatFunctions( buildFullTree(distributeTree(src) ))))))))           
+	
+			// Build new code from tree
+			/*const result = header + trig + PolishOutput( codeFromTree ( newTree ) ) + footer    
+	
+			let stack = new Function(result)();
+			let output = stack.map( row => streamToString(row) ) 
+
+			callback( composition ) 
+
+			let res = reBuildFullTree(reDistributeTree(preProcess( streamToString(output)))) 
+
+			let composition = res.reduce( (stack,row) =>  
+				stack.concat({ id : row.id , parent: row.parent , children: row.children , tkn: row.tkn , param: 
+					row.csgParam.reduce( (stack,tkn) => stack+=tkn )		
+				})  
+			,[])  
+			return composition*/
+			return "meh" 
+		}
 }
-	
-	
-		 
 
 
-	 
-	
+		// scad example 
+		//const scad = 'module foo () { module blah() { union ( ) { cube (size=0.6); } } difference() { if ( 1 === 1 ) for (x=[0:10:20]) rotate ([x,0,0]) { translate([5,0,0]) { if ( 2 === 2 ) { cylinder (size=5); } else { sphere(r=7); } } translate ([90,0,0]) rotate ([5,5,5]) sphere (r=5); } } cube(size=0.4); blah(); }'
 
-
+		//let scad = fs.readFileSync('test.scad', 'utf8');
 
 
 

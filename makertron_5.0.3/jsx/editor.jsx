@@ -47,6 +47,9 @@
 	import 'brace/mode/text'
 	import 'brace/theme/eclipse'
 
+	//------ main.js ------
+	import { square, diag } from '../js/lib.js';
+
 	// --------------------------------------------------------
 	// Load up editor 
 	// --------------------------------------------------------
@@ -104,35 +107,41 @@
 
 		// Takes the current scad and sends it to server for rendering. Includes simple _CORE_ split 
 		refreshData(expStl) {	
-			let scad = this.initialLoad()
+
+			console.log(square(11)); // 121
+			console.log(diag(4, 3)); // 5
+
+			//let parser = new Parser(this.props.patronus)
+			//console.log( parser.testing("hello")); 
+			
+			//let scad = this.initialLoad()
 			// Parse each chunk of script split by a _CORE_
-			let parse = (str,  callback) => {	 			
-				try { 				
-					let parser = new Parser(this.props.patronus)
-					parser.load(str)  
-					if ( parser.start() === false ) { 
-						callback(false,null)
-					}
-					else { 
-						callback(null,parser.dump()) 	 
-					}
-				}
-				catch(e) { 
-					callback(false,null) 
-				}    			 
-			}
+			//let parse = (str,  callback) => {	 			
+				//try { 				
+				//	let parser = new Parser(this.props.patronus)
+				//	parser.load(str)  
+				//	if ( parser.start() === false ) { 
+				//		callback(false,null)
+				//	}
+				//	else { 
+				//		callback(null,parser.dump()) 	 
+				//	}
+				//}
+				//catch(e) { 
+				//	callback(false,null) 
+				//}    			 
+			//}
 			// send message back to the core 
-			let sendMessage = (err,results) => {  
-				this.props.patronus.updateScene(results,expStl)	   
-			} 
+			//let sendMessage = (err,results) => {  
+			//	this.props.patronus.updateScene(results,expStl)	   
+			//} 
 			// build up job list of script to process
-			let jobs = [] 
-			let pages = scad.split("_CORE_")
-	
-			for ( let i = 0; i < pages.length; i++ ) { 
-				jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
-			}
-			async.series(jobs, sendMessage.bind( null ) )					
+			//let jobs = [] 
+			//let pages = scad.split("_CORE_")
+			//for ( let i = 0; i < pages.length; i++ ) { 
+			//	jobs.push( parse.bind(null,"module foo(){"+pages[i]+"}") )  
+			//}
+			//async.series(jobs, sendMessage.bind( null ) )					
 		}
 
 		render() {

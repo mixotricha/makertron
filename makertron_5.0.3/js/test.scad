@@ -1,4 +1,4 @@
-module foo() { 
+module foo(a=6) { 
 
 test_gears();
 
@@ -32,7 +32,7 @@ module gear(number_of_teeth,
 
 	union()
 	{
-		rotate(half_thick_angle) circle($fn=number_of_teeth*2, r=root_radius*1.001);
+		rotate( half_thick_angle ) circle($fn=number_of_teeth*2, r=root_radius*1.001);
 
 		for (i= [1:number_of_teeth])
 		{
@@ -93,12 +93,12 @@ module involute_gear_tooth(
 
 } 
 
-function involute_intersect_angle(base_radius, radius) = sqrt( pow(radius/base_radius,2) - 1);
-
 function polar_to_cartesian(polar) = [
 	polar[1]*cos(polar[0]),
 	polar[1]*sin(polar[0])
 ];
+
+function involute_intersect_angle (base_radius, radius) = sqrt( pow(radius/base_radius,2) - 1);
 
 module test_gears()
 {
