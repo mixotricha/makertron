@@ -1,4 +1,0 @@
-
-
-import './jsx/makertroncore.jsx';
-
